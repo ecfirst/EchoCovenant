@@ -8,7 +8,7 @@ using System.Reflection;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 
-namespace ecfirstCovStg
+namespace echoCovStg
 {
     public class EchoStg
     {
