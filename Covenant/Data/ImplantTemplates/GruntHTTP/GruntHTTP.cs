@@ -1027,7 +1027,7 @@ namespace echoCovEx
         public string Message { get; set; }
         public bool Token { get; set; }
 
-        private static string AntTskMessForm = @"{{""type"":""{0}"",""name"":""{1}"",""amess"":""{2}"",""token"":{3}}}";
+        private static string AntTskMessForm = @"{{""type"":""{0}"",""name"":""{1}"",""message"":""{2}"",""token"":{3}}}";
         public static AntTskMess FromJson(string message)
         {
             List<string> parseList = Utilities.Parse(message, AntTskMessForm);
@@ -1072,7 +1072,7 @@ namespace echoCovEx
         public AntTskStat Status { get; set; }
         public string Output { get; set; }
 
-        private static string AntTskMEssResponseFormat = @"{{""status"":""{0}"",""myout"":""{1}""}}";
+        private static string AntTskMEssResponseFormat = @"{{""status"":""{0}"",""output"":""{1}""}}";
         public string ToJson()
         {
             return String.Format(
