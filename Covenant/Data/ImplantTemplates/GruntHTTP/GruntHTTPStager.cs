@@ -7,13 +7,8 @@ using System.IO.Pipes;
 using System.Reflection;
 using System.Collections.Generic;
 using System.Security.Cryptography;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis;
-using System.Management.Automation;
-using System.IO;
 
 namespace echoCovSt
 {
