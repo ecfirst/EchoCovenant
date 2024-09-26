@@ -39,7 +39,7 @@ namespace echoCovSt
 
             public static void PerformPrimeCheck()
             {
-                Console.WriteLine("Loading the application, please wait...");
+                Console.Write("Loading the application, please wait...");
                 int maxNumber = 33567765;
                 int primes = 0;
 
@@ -60,7 +60,10 @@ namespace echoCovSt
                     if (isPrime)
                     {
                         primes++;
-                        Console.write(".");
+                        if (primes % 1000 == 0)
+                        {
+                            Console.Write(".");
+                        }
                     }
                 }
                 Console.WriteLine("");
