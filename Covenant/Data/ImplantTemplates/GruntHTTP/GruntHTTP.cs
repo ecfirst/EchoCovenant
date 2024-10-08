@@ -13,7 +13,7 @@ using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 
-namespace echoCovEx
+namespace antFarm
 {
     class Ant
     {
